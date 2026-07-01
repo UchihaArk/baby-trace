@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useLogEntry } from "@/components/log-entry/log-entry-provider";
 import { useElapsed, useTodayStats } from "@/lib/hooks";
 import { toggleSleep } from "@/lib/mutations";
-import { formatClock } from "@/lib/time";
+import { formatClock, formatRelative } from "@/lib/time";
+import type { LogApi } from "@/lib/types";
 
 function BigButton({
   onClick,
@@ -64,6 +65,28 @@ function CareButton({
   );
 }
 
+function LastCareCard({
+  emoji,
+  label,
+  last,
+}: {
+  emoji: string;
+  label: string;
+  last?: LogApi | null;
+}) {
+  return (
+    <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/5">
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <span>{emoji}</span>
+        <span>上次{label}</span>
+      </div>
+      <div className="mt-1 truncate text-sm font-semibold">
+        {last ? formatRelative(last.startTime) : "暂无"}
+      </div>
+    </div>
+  );
+}
+
 export function ActionDock({ babyId }: { babyId: number }) {
   const { openFeed, openDiaper, openPump, openBath, openHaircut, openNail } = useLogEntry();
   const { data } = useTodayStats(babyId);
@@ -79,25 +102,39 @@ export function ActionDock({ babyId }: { babyId: number }) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-3">
-        <BigButton onClick={() => openFeed()} emoji="🍼" label="喂奶" className="bg-rose-500 hover:bg-rose-500/90" />
-        <BigButton onClick={() => openDiaper()} emoji="🧻" label="换尿布" className="bg-amber-500 hover:bg-amber-500/90" />
-        <BigButton onClick={() => openPump()} emoji="🥛" label="吸奶" className="bg-teal-500 hover:bg-teal-500/90" />
-      </div>
-      <BigButton
-        onClick={onSleep}
-        disabled={toggling}
-        emoji="💤"
-        label={sleeping ? "停止睡眠" : "开始睡眠"}
-        sub={sleeping && elapsed != null ? `已睡 ${formatClock(elapsed)}` : "点击计时"}
-        className="bg-indigo-500 hover:bg-indigo-500/90 w-full"
-      />
-      <div className="grid grid-cols-3 gap-3">
-        <CareButton onClick={() => openBath()} emoji="🛁" label="洗澡" className="bg-sky-500 hover:bg-sky-500/90" />
-        <CareButton onClick={() => openHaircut()} emoji="💈" label="理发" className="bg-violet-500 hover:bg-violet-500/90" />
-        <CareButton onClick={() => openNail()} emoji="✂️" label="剪指甲" className="bg-emerald-500 hover:bg-emerald-500/90" />
-      </div>
+    <div className="space-y-6">
+      {/* 喂养区 */}
+      <section className="space-y-3">
+        <h3 className="px-1 text-xs font-semibold text-muted-foreground">喂养</h3>
+        <div className="grid grid-cols-3 gap-3">
+          <BigButton onClick={() => openFeed()} emoji="🍼" label="喂奶" className="bg-rose-500 hover:bg-rose-500/90" />
+          <BigButton onClick={() => openDiaper()} emoji="🧻" label="换尿布" className="bg-amber-500 hover:bg-amber-500/90" />
+          <BigButton onClick={() => openPump()} emoji="🥛" label="吸奶" className="bg-teal-500 hover:bg-teal-500/90" />
+        </div>
+        <BigButton
+          onClick={onSleep}
+          disabled={toggling}
+          emoji="💤"
+          label={sleeping ? "停止睡眠" : "开始睡眠"}
+          sub={sleeping && elapsed != null ? `已睡 ${formatClock(elapsed)}` : "点击计时"}
+          className="bg-indigo-500 hover:bg-indigo-500/90 w-full"
+        />
+      </section>
+
+      {/* 护理区 */}
+      <section className="space-y-3">
+        <h3 className="px-1 text-xs font-semibold text-muted-foreground">护理</h3>
+        <div className="grid grid-cols-3 gap-3">
+          <LastCareCard emoji="🛁" label="洗澡" last={data?.lastBath} />
+          <LastCareCard emoji="💈" label="理发" last={data?.lastHaircut} />
+          <LastCareCard emoji="✂️" label="剪指甲" last={data?.lastNail} />
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <CareButton onClick={() => openBath()} emoji="🛁" label="洗澡" className="bg-sky-500 hover:bg-sky-500/90" />
+          <CareButton onClick={() => openHaircut()} emoji="💈" label="理发" className="bg-violet-500 hover:bg-violet-500/90" />
+          <CareButton onClick={() => openNail()} emoji="✂️" label="剪指甲" className="bg-emerald-500 hover:bg-emerald-500/90" />
+        </div>
+      </section>
     </div>
   );
 }

@@ -17,6 +17,9 @@ export type TodayStats = {
   diaperCount: number;
   lastFeed: ReturnType<typeof toLog> | null;
   openSleep: ReturnType<typeof toLog> | null;
+  lastBath: ReturnType<typeof toLog> | null;
+  lastHaircut: ReturnType<typeof toLog> | null;
+  lastNail: ReturnType<typeof toLog> | null;
 };
 
 function safeParse(s: string): { method?: string } | null {
@@ -78,12 +81,38 @@ export const statsRoutes = new Hono<AppEnv>()
       .limit(1)
       .all();
 
+    // 最近一次 护理类（洗澡/理发/剪指甲）
+    const [lastBath] = await db
+      .select()
+      .from(schema.babyLogs)
+      .where(and(eq(schema.babyLogs.babyId, babyId), eq(schema.babyLogs.activityType, "bath")))
+      .orderBy(desc(schema.babyLogs.startTime))
+      .limit(1)
+      .all();
+    const [lastHaircut] = await db
+      .select()
+      .from(schema.babyLogs)
+      .where(and(eq(schema.babyLogs.babyId, babyId), eq(schema.babyLogs.activityType, "haircut")))
+      .orderBy(desc(schema.babyLogs.startTime))
+      .limit(1)
+      .all();
+    const [lastNail] = await db
+      .select()
+      .from(schema.babyLogs)
+      .where(and(eq(schema.babyLogs.babyId, babyId), eq(schema.babyLogs.activityType, "nail")))
+      .orderBy(desc(schema.babyLogs.startTime))
+      .limit(1)
+      .all();
+
     const stats: TodayStats = {
       bottleMl,
       breastMin,
       diaperCount,
       lastFeed: lastFeed ? toLog(lastFeed) : null,
       openSleep: openSleep ? toLog(openSleep) : null,
+      lastBath: lastBath ? toLog(lastBath) : null,
+      lastHaircut: lastHaircut ? toLog(lastHaircut) : null,
+      lastNail: lastNail ? toLog(lastNail) : null,
     };
     return c.json(stats);
   });

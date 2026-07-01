@@ -60,10 +60,10 @@ export default function ManagePage() {
           </div>
           <div className="flex justify-between gap-3">
             <dt className="shrink-0 text-muted-foreground">出生日期</dt>
-            <dd className="text-right">
-              <span className="font-medium">{baby.birthDate}</span>
+            <dd className="whitespace-nowrap text-right font-medium">
+              {baby.birthDate}
               {extras && (
-                <span className="mt-0.5 block text-xs text-muted-foreground">农历{extras.lunar}</span>
+                <span className="ml-1 text-xs font-normal text-muted-foreground">（农历{extras.lunar}）</span>
               )}
             </dd>
           </div>
