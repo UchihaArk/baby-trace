@@ -17,9 +17,11 @@ import { Button } from "@/components/ui/button";
 import { useLogEntry } from "@/components/log-entry/log-entry-provider";
 import { activityMeta, describeLog } from "@/lib/activity";
 import { deleteLog } from "@/lib/mutations";
-import { formatClockTime, formatDuration, formatRelative } from "@/lib/time";
+import { formatClockTime, formatRelative } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { LogApi } from "@/lib/types";
+
+const EDITABLE = ["feed", "diaper", "pump", "bath", "haircut", "nail"] as const;
 
 export function TimelineItem({
   log,
@@ -31,19 +33,27 @@ export function TimelineItem({
   showActions?: boolean;
 }) {
   const meta = activityMeta[log.activityType];
-  const { openFeed, openDiaper, openPump } = useLogEntry();
+  const { openFeed, openDiaper, openPump, openBath, openHaircut, openNail } = useLogEntry();
   const [openDel, setOpenDel] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const canEdit =
-    log.activityType === "feed" || log.activityType === "diaper" || log.activityType === "pump";
-  const sleepDuration =
-    log.activityType === "sleep" && log.endTime ? formatDuration(log.endTime - log.startTime) : null;
+  const canEdit = (EDITABLE as readonly string[]).includes(log.activityType);
 
   function onEdit() {
-    if (log.activityType === "feed") openFeed(log);
-    else if (log.activityType === "diaper") openDiaper(log);
-    else if (log.activityType === "pump") openPump(log);
+    switch (log.activityType) {
+      case "feed":
+        return openFeed(log);
+      case "diaper":
+        return openDiaper(log);
+      case "pump":
+        return openPump(log);
+      case "bath":
+        return openBath(log);
+      case "haircut":
+        return openHaircut(log);
+      case "nail":
+        return openNail(log);
+    }
   }
 
   async function onDelete() {
@@ -61,10 +71,7 @@ export function TimelineItem({
 
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">{describeLog(log)}</div>
-        <div className="truncate text-xs text-muted-foreground">
-          {meta.label}
-          {sleepDuration ? ` · ${sleepDuration}` : ""} · {formatRelative(log.startTime)}
-        </div>
+        <div className="truncate text-xs text-muted-foreground">{formatRelative(log.startTime)}</div>
         {log.notes && (
           <div className="mt-0.5 line-clamp-2 break-words text-xs text-muted-foreground/80">
             📝 {log.notes}

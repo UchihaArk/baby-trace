@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const activityTypeSchema = z.enum(["feed", "diaper", "sleep", "pump"]);
+export const activityTypeSchema = z.enum(["feed", "diaper", "sleep", "pump", "bath", "haircut", "nail"]);
 
 /** 喂奶详情：奶瓶(毫升，母乳/奶粉) 或 亲喂(分钟，含侧别) */
 export const feedDetailsSchema = z.object({
@@ -22,12 +22,19 @@ export const pumpDetailsSchema = z.object({
 });
 export type PumpDetails = z.infer<typeof pumpDetailsSchema>;
 
+/** 剪指甲详情：手指 / 脚趾 / 都有 */
+export const nailDetailsSchema = z.object({
+  type: z.enum(["fingers", "toes", "both"]),
+});
+export type NailDetails = z.infer<typeof nailDetailsSchema>;
+
 export const detailsSchema = z.union([
   feedDetailsSchema,
   diaperDetailsSchema,
   pumpDetailsSchema,
+  nailDetailsSchema,
 ]);
-export type LogDetails = FeedDetails | DiaperDetails | PumpDetails;
+export type LogDetails = FeedDetails | DiaperDetails | PumpDetails | NailDetails;
 
 /** 创建一条记录的入参（必须归属某个 baby） */
 export const createLogSchema = z.object({

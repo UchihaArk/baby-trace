@@ -21,6 +21,9 @@ const FILTERS: { value: Filter; label: string; selectedClass?: string }[] = [
   { value: "diaper", label: "🧻 尿布", selectedClass: "border-transparent bg-amber-500 text-white" },
   { value: "pump", label: "🥛 吸奶", selectedClass: "border-transparent bg-teal-500 text-white" },
   { value: "sleep", label: "💤 睡眠", selectedClass: "border-transparent bg-indigo-500 text-white" },
+  { value: "bath", label: "🛁 洗澡", selectedClass: "border-transparent bg-sky-500 text-white" },
+  { value: "haircut", label: "💈 理发", selectedClass: "border-transparent bg-violet-500 text-white" },
+  { value: "nail", label: "✂️ 剪指甲", selectedClass: "border-transparent bg-emerald-500 text-white" },
 ];
 
 function groupByDay(logs: LogApi[]): Group[] {
@@ -118,7 +121,7 @@ export default function HistoryPage() {
       >
         <RefreshCw className={cn("size-5 transition-transform", refreshing && "animate-spin")} />
       </div>
-      <div className="flex gap-2 pb-3">
+      <div className="flex gap-2 overflow-x-auto pb-3">
         {FILTERS.map((f) => (
           <Chip
             key={f.value}

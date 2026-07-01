@@ -1,6 +1,6 @@
-import { Baby, Droplets, Moon, Utensils, type LucideIcon } from "lucide-react";
+import { Baby, Bath, Droplets, Hand, Moon, Scissors, Utensils, type LucideIcon } from "lucide-react";
 import { formatDuration } from "./time";
-import type { ActivityType, LogApi } from "./types";
+import type { ActivityType, DiaperDetails, LogApi, NailDetails } from "./types";
 
 type Meta = {
   label: string;
@@ -55,6 +55,36 @@ export const activityMeta: Record<ActivityType, Meta> = {
     ring: "ring-teal-500/30",
     border: "border-teal-500/20",
   },
+  bath: {
+    label: "洗澡",
+    emoji: "🛁",
+    icon: Bath,
+    text: "text-sky-600 dark:text-sky-400",
+    bgSolid: "bg-sky-500",
+    bgSoft: "bg-sky-500/10",
+    ring: "ring-sky-500/30",
+    border: "border-sky-500/20",
+  },
+  haircut: {
+    label: "理发",
+    emoji: "💈",
+    icon: Scissors,
+    text: "text-violet-600 dark:text-violet-400",
+    bgSolid: "bg-violet-500",
+    bgSoft: "bg-violet-500/10",
+    ring: "ring-violet-500/30",
+    border: "border-violet-500/20",
+  },
+  nail: {
+    label: "剪指甲",
+    emoji: "✂️",
+    icon: Hand,
+    text: "text-emerald-600 dark:text-emerald-400",
+    bgSolid: "bg-emerald-500",
+    bgSoft: "bg-emerald-500/10",
+    ring: "ring-emerald-500/30",
+    border: "border-emerald-500/20",
+  },
 };
 
 const diaperTypeLabel: Record<"wet" | "dirty" | "both", string> = {
@@ -67,38 +97,50 @@ const breastSideLabel: Record<"left" | "right" | "both", string> = {
   right: "右",
   both: "双侧",
 };
-const pumpSideLabel: Record<"left" | "right" | "both", string> = {
-  left: "左侧",
-  right: "右侧",
-  both: "双侧",
+const nailTypeLabel: Record<"fingers" | "toes" | "both", string> = {
+  fingers: "手指",
+  toes: "脚趾",
+  both: "手指+脚趾",
 };
 
 /** 一条记录的简要描述（不含时间） */
 export function describeLog(log: LogApi): string {
-  if (log.activityType === "feed") {
-    const d = log.details;
-    if (d && "method" in d && d.method === "bottle") {
-      const milkLabel = d.milk === "formula" ? "奶粉" : "母乳";
-      return `${milkLabel} ${log.amount ?? 0} ml`;
+  switch (log.activityType) {
+    case "feed": {
+      const d = log.details;
+      if (d && "method" in d && d.method === "bottle") {
+        const milkLabel = d.milk === "formula" ? "奶粉" : "母乳";
+        return `${milkLabel} ${log.amount ?? 0} ml`;
+      }
+      if (d && "method" in d && d.method === "breast") {
+        const side = d.side ? ` · ${breastSideLabel[d.side]}` : "";
+        return `亲喂${side} ${log.amount ?? 0} 分钟`;
+      }
+      return `${log.amount ?? 0} ml`;
     }
-    if (d && "method" in d && d.method === "breast") {
-      const side = d.side ? ` · ${breastSideLabel[d.side]}` : "";
-      return `亲喂${side} ${log.amount ?? 0} 分钟`;
+    case "diaper": {
+      const d = log.details as DiaperDetails | null;
+      return d ? diaperTypeLabel[d.type] : "已换";
     }
-    return `${log.amount ?? 0} ml`;
+    case "pump": {
+      const d = log.details;
+      const side = d && "side" in d && d.side ? pumpSideText(d.side) : "";
+      return `${side} ${log.amount ?? 0} ml`.trim();
+    }
+    case "nail": {
+      const d = log.details as NailDetails | null;
+      return d ? nailTypeLabel[d.type] : "剪指甲";
+    }
+    case "bath":
+      return "洗澡";
+    case "haircut":
+      return "理发";
+    case "sleep":
+    default:
+      return log.endTime && log.startTime ? formatDuration(log.endTime - log.startTime) : "进行中";
   }
-  if (log.activityType === "diaper") {
-    const d = log.details;
-    return d && "type" in d ? diaperTypeLabel[d.type] : "已换";
-  }
-  if (log.activityType === "pump") {
-    const d = log.details;
-    const side = d && "side" in d && d.side ? pumpSideLabel[d.side] : "";
-    return `${side} ${log.amount ?? 0} ml`;
-  }
-  // sleep
-  if (log.endTime && log.startTime) {
-    return formatDuration(log.endTime - log.startTime);
-  }
-  return "进行中";
+}
+
+function pumpSideText(side: "left" | "right" | "both"): string {
+  return side === "both" ? "双侧" : side === "left" ? "左侧" : "右侧";
 }

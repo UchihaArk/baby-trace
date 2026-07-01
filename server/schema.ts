@@ -1,7 +1,7 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-/** 活动类型：feed 喂奶 / diaper 换尿布 / sleep 睡眠 / pump 吸奶 */
-export const activityTypes = ["feed", "diaper", "sleep", "pump"] as const;
+/** 活动类型：feed 喂奶 / diaper 换尿布 / sleep 睡眠 / pump 吸奶 / bath 洗澡 / haircut 理发 / nail 剪指甲 */
+export const activityTypes = ["feed", "diaper", "sleep", "pump", "bath", "haircut", "nail"] as const;
 export type ActivityType = (typeof activityTypes)[number];
 
 /** 性别 */

@@ -8,6 +8,7 @@ export type {
   FeedDetails,
   DiaperDetails,
   PumpDetails,
+  NailDetails,
   CreateLogInput,
   UpdateLogInput,
   CreateBabyInput,

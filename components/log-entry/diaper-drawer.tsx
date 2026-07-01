@@ -26,8 +26,8 @@ const OPTIONS: { value: DiaperType; label: string; emoji: string }[] = [
 ];
 
 function initType(editing: LogApi | null): DiaperType {
-  const d = editing?.details;
-  return d && "type" in d ? d.type : "both";
+  const d = editing?.details as DiaperDetails | null;
+  return d?.type ?? "both";
 }
 
 export function DiaperDrawer({

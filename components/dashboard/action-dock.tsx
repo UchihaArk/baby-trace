@@ -38,8 +38,34 @@ function BigButton({
   );
 }
 
+function CareButton({
+  onClick,
+  emoji,
+  label,
+  className,
+}: {
+  onClick: () => void;
+  emoji: string;
+  label: string;
+  className: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "flex flex-col items-center justify-center gap-0.5 rounded-2xl py-3 text-white shadow-sm transition active:scale-[.98] " +
+        className
+      }
+    >
+      <span className="text-2xl leading-none">{emoji}</span>
+      <span className="text-xs font-semibold">{label}</span>
+    </button>
+  );
+}
+
 export function ActionDock({ babyId }: { babyId: number }) {
-  const { openFeed, openDiaper, openPump } = useLogEntry();
+  const { openFeed, openDiaper, openPump, openBath, openHaircut, openNail } = useLogEntry();
   const { data } = useTodayStats(babyId);
   const elapsed = useElapsed(data?.openSleep?.startTime ?? null);
   const [toggling, setToggling] = useState(false);
@@ -67,6 +93,11 @@ export function ActionDock({ babyId }: { babyId: number }) {
         sub={sleeping && elapsed != null ? `已睡 ${formatClock(elapsed)}` : "点击计时"}
         className="bg-indigo-500 hover:bg-indigo-500/90 w-full"
       />
+      <div className="grid grid-cols-3 gap-3">
+        <CareButton onClick={() => openBath()} emoji="🛁" label="洗澡" className="bg-sky-500 hover:bg-sky-500/90" />
+        <CareButton onClick={() => openHaircut()} emoji="💈" label="理发" className="bg-violet-500 hover:bg-violet-500/90" />
+        <CareButton onClick={() => openNail()} emoji="✂️" label="剪指甲" className="bg-emerald-500 hover:bg-emerald-500/90" />
+      </div>
     </div>
   );
 }
