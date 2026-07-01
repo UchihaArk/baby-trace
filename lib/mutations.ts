@@ -3,6 +3,7 @@
 import { mutate } from "swr";
 import { toast } from "sonner";
 import { api } from "./api-client";
+import { notifyLogsMutated } from "./log-events";
 import { BABIES_KEY, BABY_KEY, RECENT_KEY, RECENT_LIMIT } from "./hooks";
 import { nowSec } from "./time";
 import type {
@@ -14,8 +15,11 @@ import type {
   UpdateLogInput,
 } from "./types";
 
-const revalidateLogs = (babyId: number) =>
-  mutate((k) => typeof k === "string" && k.startsWith(`logs:${babyId}:`));
+const revalidateLogs = (babyId: number) => {
+  // 通知历史页（useSWRInfinite）用 bound mutate 刷新；普通缓存由下面的 mutate 刷新
+  notifyLogsMutated();
+  return mutate((k) => typeof k === "string" && k.startsWith(`logs:${babyId}:`));
+};
 const revalidateStats = (babyId: number) =>
   mutate((k) => typeof k === "string" && k.startsWith(`stats:${babyId}:`));
 const revalidateBabies = () => mutate((k) => typeof k === "string" && k === BABIES_KEY);

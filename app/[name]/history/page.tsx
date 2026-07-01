@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, RefreshCw } from "lucide-react";
 import { useBaby } from "@/components/baby/baby-provider";
 import { TimelineItem } from "@/components/dashboard/timeline-item";
 import { Chip } from "@/components/log-entry/chip";
 import { HISTORY_PAGE_SIZE, useBabyLogsInfinite } from "@/lib/hooks";
+import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
+import { subscribeLogsMutated } from "@/lib/log-events";
 import { dateLabel, formatDate, startOfLocalDaySec } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { ActivityType, LogApi } from "@/lib/types";
@@ -46,7 +48,10 @@ export default function HistoryPage() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const initialized = useRef(false);
 
-  const { data, setSize, isValidating } = useBabyLogsInfinite(baby?.id ?? null);
+  const { data, setSize, isValidating, mutate: mutateLogs } = useBabyLogsInfinite(baby?.id ?? null);
+  const { pull, refreshing, pulling } = usePullToRefresh(async () => {
+    await mutateLogs();
+  });
   const pages = data ?? [];
   const allLogs = pages.flat();
   const lastPage = pages[pages.length - 1];
@@ -69,6 +74,9 @@ export default function HistoryPage() {
     const hasToday = groups.some((g) => g.key === todayKey);
     setExpanded(new Set([hasToday ? todayKey : groups[0].key]));
   }, [groups]);
+
+  // 日志增删改后，用 bound mutate 刷新无限滚动列表（useSWRInfinite 不响应全局 mutate）
+  useEffect(() => subscribeLogsMutated(() => { void mutateLogs(); }), [mutateLogs]);
 
   // 无限滚动：底部哨兵进入视口时加载下一页
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -100,6 +108,16 @@ export default function HistoryPage() {
 
   return (
     <main className="px-4 pb-8 pt-2">
+      {/* 下拉刷新指示器 */}
+      <div
+        className={cn(
+          "-mx-4 flex items-center justify-center overflow-hidden text-muted-foreground",
+          !pulling && "transition-[height] duration-200 ease-out"
+        )}
+        style={{ height: refreshing ? 56 : pull }}
+      >
+        <RefreshCw className={cn("size-5 transition-transform", refreshing && "animate-spin")} />
+      </div>
       <div className="flex gap-2 pb-3">
         {FILTERS.map((f) => (
           <Chip
