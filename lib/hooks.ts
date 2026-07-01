@@ -5,7 +5,7 @@ import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 import { api } from "./api-client";
 import { nowSec, startOfLocalDaySec } from "./time";
-import type { Baby, LogApi, TodayStats } from "./types";
+import type { Baby, LogApi, Summary, TodayStats } from "./types";
 
 export const RECENT_LIMIT = 5;
 export const HISTORY_PAGE_SIZE = 30;
@@ -93,6 +93,20 @@ export function useBabyLogsInfinite(babyId: number | null) {
 }
 
 /** 进行中睡眠的实时计时（秒） */
+/** 统计汇总（按时间区间） */
+export const SUMMARY_KEY = (babyId: number, from: number, to: number) =>
+  `summary:${babyId}:${from}:${to}`;
+
+export function useStatsSummary(babyId: number | null, from: number, to: number) {
+  return useSWR<Summary>(babyId != null ? SUMMARY_KEY(babyId, from, to) : null, async () => {
+    const res = await api.stats.summary.$get({
+      query: { babyId: String(babyId), from: String(from), to: String(to) },
+    });
+    if (!res.ok) throw new Error("加载统计失败");
+    return res.json();
+  });
+}
+
 export function useElapsed(startTsSec: number | null): number | null {
   const [, tick] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {

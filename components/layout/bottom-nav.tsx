@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, History, Settings } from "lucide-react";
+import { LayoutDashboard, History, PieChart, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBaby } from "@/components/baby/baby-provider";
 
@@ -15,9 +15,15 @@ export function BottomNav() {
     { href: base, label: "仪表盘", icon: LayoutDashboard, active: pathname === base },
     {
       href: `${base}/history`,
-      label: "历史",
+      label: "记录详情",
       icon: History,
       active: pathname.startsWith(`${base}/history`),
+    },
+    {
+      href: `${base}/stats`,
+      label: "统计",
+      icon: PieChart,
+      active: pathname.startsWith(`${base}/stats`),
     },
     {
       href: `${base}/manage`,
@@ -37,7 +43,7 @@ export function BottomNav() {
               key={it.label}
               href={it.href}
               className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs transition-colors",
+                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[0.7rem] transition-colors",
                 it.active ? "text-foreground" : "text-muted-foreground"
               )}
             >

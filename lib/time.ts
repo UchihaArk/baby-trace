@@ -12,12 +12,17 @@ export function startOfLocalDaySec(d = new Date()): number {
   return Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 1000);
 }
 
-/** 相对时间（中文）：刚刚 / X分钟前 / X小时前 / X天前 / 日期 */
+/** 相对时间（中文，精确到分钟）：刚刚 / X分钟前 / X小时Y分前 / X天前 / 日期 */
 export function formatRelative(tsSec: number, now = nowSec()): string {
   const diff = Math.max(0, now - tsSec);
   if (diff < 60) return "刚刚";
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
+  const totalMin = Math.floor(diff / 60);
+  if (totalMin < 60) return `${totalMin} 分钟前`;
+  if (diff < 86400) {
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return m > 0 ? `${h} 小时 ${m} 分前` : `${h} 小时前`;
+  }
   const days = Math.floor(diff / 86400);
   if (days < 7) return `${days} 天前`;
   return formatDate(tsSec);
@@ -46,6 +51,13 @@ export function formatDuration(sec: number): string {
   const m = total % 60;
   if (h > 0) return `${h}时${m}分`;
   return `${m}分`;
+}
+
+/** 秒 → 间隔时长：>=1天显示「X.X 天」，否则「X 小时」/「X 分钟」 */
+export function formatInterval(seconds: number): string {
+  if (seconds >= 86400) return `${(seconds / 86400).toFixed(1)} 天`;
+  if (seconds >= 3600) return `${Math.round(seconds / 3600)} 小时`;
+  return `${Math.max(1, Math.round(seconds / 60))} 分钟`;
 }
 
 /** 计时器 mm:ss */

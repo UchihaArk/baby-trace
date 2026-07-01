@@ -18,9 +18,11 @@ export default function BabyListPage() {
 
   return (
     <div className="mx-auto min-h-dvh w-full max-w-md">
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-background/85 px-4 backdrop-blur-md">
-        <h1 className="text-lg font-bold">我的宝宝</h1>
-        <ThemeToggle />
+      <header className="sticky top-0 z-30 bg-background/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-md items-center justify-between">
+          <h1 className="text-lg font-bold">我的宝宝</h1>
+          <ThemeToggle />
+        </div>
       </header>
 
       <main className="space-y-3 px-4 pb-28 pt-3">

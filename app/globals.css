@@ -126,5 +126,12 @@
   }
   html {
     @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* 移除移动端点击 300ms 延迟与灰色高亮（iOS Safari） */
+  a,
+  button,
+  [role="button"] {
+    touch-action: manipulation;
   }
 }
