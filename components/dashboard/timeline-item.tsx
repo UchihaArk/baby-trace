@@ -1,0 +1,115 @@
+"use client";
+
+import { useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { useLogEntry } from "@/components/log-entry/log-entry-provider";
+import { activityMeta, describeLog } from "@/lib/activity";
+import { deleteLog } from "@/lib/mutations";
+import { formatClockTime, formatDuration, formatRelative } from "@/lib/time";
+import { cn } from "@/lib/utils";
+import type { LogApi } from "@/lib/types";
+
+export function TimelineItem({
+  log,
+  babyId,
+  showActions = true,
+}: {
+  log: LogApi;
+  babyId: number;
+  showActions?: boolean;
+}) {
+  const meta = activityMeta[log.activityType];
+  const { openFeed, openDiaper, openPump } = useLogEntry();
+  const [openDel, setOpenDel] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const canEdit =
+    log.activityType === "feed" || log.activityType === "diaper" || log.activityType === "pump";
+  const sleepDuration =
+    log.activityType === "sleep" && log.endTime ? formatDuration(log.endTime - log.startTime) : null;
+
+  function onEdit() {
+    if (log.activityType === "feed") openFeed(log);
+    else if (log.activityType === "diaper") openDiaper(log);
+    else if (log.activityType === "pump") openPump(log);
+  }
+
+  async function onDelete() {
+    setDeleting(true);
+    await deleteLog(log.id, babyId);
+    setDeleting(false);
+    setOpenDel(false);
+  }
+
+  return (
+    <div className="flex items-center gap-3 py-2.5">
+      <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-full text-lg", meta.bgSoft)}>
+        <span>{meta.emoji}</span>
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-medium">{describeLog(log)}</div>
+        <div className="truncate text-xs text-muted-foreground">
+          {meta.label}
+          {sleepDuration ? ` · ${sleepDuration}` : ""} · {formatRelative(log.startTime)}
+        </div>
+        {log.notes && (
+          <div className="mt-0.5 line-clamp-2 break-words text-xs text-muted-foreground/80">
+            📝 {log.notes}
+          </div>
+        )}
+      </div>
+
+      <time className="w-20 shrink-0 whitespace-nowrap text-right text-xs tabular-nums text-muted-foreground">
+        {log.activityType === "sleep" && log.endTime
+          ? `${formatClockTime(log.startTime)}–${formatClockTime(log.endTime)}`
+          : formatClockTime(log.startTime)}
+      </time>
+
+      {showActions && (
+        <div className="flex shrink-0 items-center gap-0.5">
+          {canEdit && (
+            <Button variant="ghost" size="icon-sm" onClick={onEdit} aria-label="编辑">
+              <Pencil />
+            </Button>
+          )}
+          <AlertDialog open={openDel} onOpenChange={setOpenDel}>
+            <AlertDialogTrigger render={<Button variant="ghost" size="icon-sm" aria-label="删除" />}>
+              <Trash2 />
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>删除这条记录？</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {meta.label} · {describeLog(log)}，删除后不可恢复。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>取消</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-white hover:bg-destructive/80"
+                  onClick={onDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? "删除中…" : "删除"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
+    </div>
+  );
+}

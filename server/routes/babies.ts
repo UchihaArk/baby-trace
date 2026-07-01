@@ -1,0 +1,104 @@
+import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { eq } from "drizzle-orm";
+import type { AppEnv } from "../env";
+import { createDb, schema } from "../db";
+import { createBabySchema, updateBabySchema } from "../inputs";
+import { nowSec } from "../lib";
+
+export const babiesRoutes = new Hono<AppEnv>()
+  /** GET /babies —— 列出所有宝宝 */
+  .get("/", async (c) => {
+    const db = createDb(c.env.DB);
+    const rows = await db
+      .select()
+      .from(schema.babies)
+      .orderBy(schema.babies.createdAt)
+      .all();
+    return c.json(rows);
+  })
+
+  /** POST /babies —— 新建宝宝 */
+  .post("/", zValidator("json", createBabySchema), async (c) => {
+    const db = createDb(c.env.DB);
+    const body = c.req.valid("json");
+
+    const [existing] = await db
+      .select()
+      .from(schema.babies)
+      .where(eq(schema.babies.name, body.name))
+      .limit(1)
+      .all();
+    if (existing) return c.json({ error: "该乳名已存在" }, 409);
+
+    const [row] = await db
+      .insert(schema.babies)
+      .values({
+        name: body.name,
+        birthDate: body.birthDate,
+        gender: body.gender ?? null,
+        avatarEmoji: body.avatarEmoji,
+        avatarColor: body.avatarColor,
+        createdAt: nowSec(),
+      })
+      .returning();
+    return c.json(row, 201);
+  })
+
+  /** GET /babies/:name —— 按乳名查询（路由页用） */
+  .get("/:name", async (c) => {
+    const db = createDb(c.env.DB);
+    const [row] = await db
+      .select()
+      .from(schema.babies)
+      .where(eq(schema.babies.name, c.req.param("name")))
+      .limit(1)
+      .all();
+    if (!row) return c.json({ error: "未找到该宝宝" }, 404);
+    return c.json(row);
+  })
+
+  /** PATCH /babies/:id —— 编辑宝宝 */
+  .patch("/:id", zValidator("json", updateBabySchema), async (c) => {
+    const id = Number(c.req.param("id"));
+    if (Number.isNaN(id)) return c.json({ error: "Invalid id" }, 400);
+
+    const db = createDb(c.env.DB);
+    const body = c.req.valid("json");
+
+    if (body.name) {
+      const [dup] = await db
+        .select()
+        .from(schema.babies)
+        .where(eq(schema.babies.name, body.name))
+        .limit(1)
+        .all();
+      if (dup && dup.id !== id) return c.json({ error: "该乳名已存在" }, 409);
+    }
+
+    const patch: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(body)) if (v !== undefined) patch[k] = v;
+
+    const [row] = await db
+      .update(schema.babies)
+      .set(patch)
+      .where(eq(schema.babies.id, id))
+      .returning();
+    if (!row) return c.json({ error: "未找到" }, 404);
+    return c.json(row);
+  })
+
+  /** DELETE /babies/:id —— 删除宝宝（同时删除其所有记录） */
+  .delete("/:id", async (c) => {
+    const id = Number(c.req.param("id"));
+    if (Number.isNaN(id)) return c.json({ error: "Invalid id" }, 400);
+
+    const db = createDb(c.env.DB);
+    await db.delete(schema.babyLogs).where(eq(schema.babyLogs.babyId, id)).run();
+    const [row] = await db
+      .delete(schema.babies)
+      .where(eq(schema.babies.id, id))
+      .returning();
+    if (!row) return c.json({ error: "未找到" }, 404);
+    return c.json({ ok: true, id });
+  });

@@ -1,0 +1,23 @@
+{
+  // OpenNext 构建产物入口
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // 静态资源（Next.js 构建产物）
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      // 代码用 env.DB 读取该绑定
+      "binding": "DB",
+      "database_name": "baby-trace",
+      "database_id": "4e637c3f-ae00-4fca-9d64-65f3db0b7c15",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

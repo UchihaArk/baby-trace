@@ -1,0 +1,104 @@
+import { Baby, Droplets, Moon, Utensils, type LucideIcon } from "lucide-react";
+import { formatDuration } from "./time";
+import type { ActivityType, LogApi } from "./types";
+
+type Meta = {
+  label: string;
+  emoji: string;
+  icon: LucideIcon;
+  text: string; // 文字色
+  bgSolid: string; // 实心背景
+  bgSoft: string; // 柔和背景
+  ring: string; // 描边/聚焦
+  border: string; // 边框
+};
+
+/** 各类活动的色彩与图标（全程 Tailwind 工具类） */
+export const activityMeta: Record<ActivityType, Meta> = {
+  feed: {
+    label: "喂奶",
+    emoji: "🍼",
+    icon: Utensils,
+    text: "text-rose-600 dark:text-rose-400",
+    bgSolid: "bg-rose-500",
+    bgSoft: "bg-rose-500/10",
+    ring: "ring-rose-500/30",
+    border: "border-rose-500/20",
+  },
+  diaper: {
+    label: "换尿布",
+    emoji: "🧻",
+    icon: Baby,
+    text: "text-amber-600 dark:text-amber-400",
+    bgSolid: "bg-amber-500",
+    bgSoft: "bg-amber-500/10",
+    ring: "ring-amber-500/30",
+    border: "border-amber-500/20",
+  },
+  sleep: {
+    label: "睡眠",
+    emoji: "💤",
+    icon: Moon,
+    text: "text-indigo-600 dark:text-indigo-400",
+    bgSolid: "bg-indigo-500",
+    bgSoft: "bg-indigo-500/10",
+    ring: "ring-indigo-500/30",
+    border: "border-indigo-500/20",
+  },
+  pump: {
+    label: "吸奶",
+    emoji: "🥛",
+    icon: Droplets,
+    text: "text-teal-600 dark:text-teal-400",
+    bgSolid: "bg-teal-500",
+    bgSoft: "bg-teal-500/10",
+    ring: "ring-teal-500/30",
+    border: "border-teal-500/20",
+  },
+};
+
+const diaperTypeLabel: Record<"wet" | "dirty" | "both", string> = {
+  wet: "嘘嘘",
+  dirty: "粑粑",
+  both: "嘘嘘+粑粑",
+};
+const breastSideLabel: Record<"left" | "right" | "both", string> = {
+  left: "左",
+  right: "右",
+  both: "双侧",
+};
+const pumpSideLabel: Record<"left" | "right" | "both", string> = {
+  left: "左侧",
+  right: "右侧",
+  both: "双侧",
+};
+
+/** 一条记录的简要描述（不含时间） */
+export function describeLog(log: LogApi): string {
+  if (log.activityType === "feed") {
+    const d = log.details;
+    if (d && "method" in d && d.method === "bottle") {
+      const milkLabel = d.milk === "formula" ? "奶粉" : "母乳";
+      return `${milkLabel} ${log.amount ?? 0} ml`;
+    }
+    if (d && "method" in d && d.method === "breast") {
+      const side = d.side ? ` · ${breastSideLabel[d.side]}` : "";
+      return `亲喂${side} ${log.amount ?? 0} 分钟`;
+    }
+    return `${log.amount ?? 0} ml`;
+  }
+  if (log.activityType === "diaper") {
+    const d = log.details;
+    return d && "type" in d ? diaperTypeLabel[d.type] : "已换";
+  }
+  if (log.activityType === "pump") {
+    const d = log.details;
+    const side = d && "side" in d && d.side ? pumpSideLabel[d.side] : "";
+    return `${side} ${log.amount ?? 0} ml`;
+  }
+  // sleep
+  if (log.endTime && log.startTime) {
+    return formatDuration(log.endTime - log.startTime);
+  }
+  return "进行中";
+}
