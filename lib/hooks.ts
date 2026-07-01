@@ -87,7 +87,8 @@ export function useBabyLogsInfinite(babyId: number | null) {
       if (!res.ok) throw new Error("加载历史失败");
       return res.json();
     },
-    { revalidateFirstPage: false }
+    // 进入历史页时重新拉取第一页，确保看到最新记录（而非上次的缓存）
+    { revalidateFirstPage: true }
   );
 }
 
