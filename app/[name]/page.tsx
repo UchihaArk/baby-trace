@@ -1,5 +1,6 @@
 "use client";
 
+import { TodayBanner } from "@/components/dashboard/today-banner";
 import { TodaySummary } from "@/components/dashboard/today-summary";
 import { ActionDock } from "@/components/dashboard/action-dock";
 import { Timeline } from "@/components/dashboard/timeline";
@@ -12,6 +13,7 @@ export default function DashboardPage() {
   }
   return (
     <div className="space-y-6 px-4 pb-8 pt-3">
+      <TodayBanner />
       <TodaySummary babyId={baby.id} />
       <ActionDock babyId={baby.id} />
       <Timeline babyId={baby.id} />
