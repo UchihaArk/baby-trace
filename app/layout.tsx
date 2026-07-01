@@ -8,12 +8,12 @@ const geistSans = Geist({ variable: "--font-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "宝宝全记录",
+  title: "拾光记",
   description: "新生儿喂奶 / 换尿布 / 睡眠一键记录",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "宝宝全记录",
+    title: "拾光记",
     statusBarStyle: "default",
   },
   icons: {

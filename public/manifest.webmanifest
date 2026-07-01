@@ -1,6 +1,6 @@
 {
-  "name": "宝宝全记录",
-  "short_name": "宝宝",
+  "name": "拾光记",
+  "short_name": "拾光记",
   "description": "新生儿喂奶 / 换尿布 / 睡眠一键记录",
   "start_url": "/",
   "scope": "/",
