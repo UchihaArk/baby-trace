@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
 import type { KeyedMutator } from "swr";
 import { useBabyByName } from "@/lib/hooks";
 import type { Baby } from "@/lib/types";
@@ -23,9 +23,10 @@ export function useBaby() {
 
 export function BabyProvider({ name, children }: { name: string; children: React.ReactNode }) {
   const { data, error, isLoading, mutate } = useBabyByName(name);
-  return (
-    <BabyContext.Provider value={{ baby: data ?? null, isLoading, error, mutateBaby: mutate }}>
-      {children}
-    </BabyContext.Provider>
+  // memo：value 引用稳定，baby 未变时不触发所有 useBaby 消费者重渲染
+  const value = useMemo<BabyContextValue>(
+    () => ({ baby: data ?? null, isLoading, error, mutateBaby: mutate }),
+    [data, isLoading, error, mutate]
   );
+  return <BabyContext.Provider value={value}>{children}</BabyContext.Provider>;
 }

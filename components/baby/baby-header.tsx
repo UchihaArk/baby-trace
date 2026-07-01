@@ -1,14 +1,16 @@
 "use client";
 
+import { memo } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BabyAvatar } from "./baby-avatar";
 import { useBaby } from "./baby-provider";
 
-export function BabyHeader() {
+/** memo：切换底部 Tab（父级重渲染）时，baby 不变则不重渲染 */
+export const BabyHeader = memo(function BabyHeader() {
   const { baby } = useBaby();
 
   return (
-    <header className="sticky top-0 z-30 bg-background/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+    <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex h-14 max-w-md items-center justify-between gap-2 px-4">
         <div className="flex min-w-0 items-center gap-2.5">
           {baby ? (
@@ -24,4 +26,4 @@ export function BabyHeader() {
       </div>
     </header>
   );
-}
+});

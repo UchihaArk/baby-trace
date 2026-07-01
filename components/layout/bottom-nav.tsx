@@ -34,7 +34,7 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="sticky bottom-0 z-30 border-t border-border bg-background/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
+    <nav className="sticky bottom-0 z-30 border-t border-border bg-background pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex max-w-md items-stretch">
         {items.map((it) => {
           const Icon = it.icon;
