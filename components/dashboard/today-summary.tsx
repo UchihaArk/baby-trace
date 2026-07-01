@@ -64,7 +64,7 @@ export function TodaySummary({ babyId }: { babyId: number }) {
       <StatCard
         label="上次喂奶"
         value={lastFeed ? formatRelative(lastFeed.startTime) : "—"}
-        sub={lastFeed ? "前" : "暂无记录"}
+        sub={lastFeed ? undefined : "暂无记录"}
         icon={Droplets}
         accentText="text-rose-600 dark:text-rose-400"
         accentBg="bg-rose-500/10"
