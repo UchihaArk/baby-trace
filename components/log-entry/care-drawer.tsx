@@ -30,7 +30,7 @@ const NAIL_OPTIONS: { value: NailType; label: string }[] = [
 
 function initNailType(editing: LogApi | null): NailType {
   const d = editing?.details as NailDetails | null;
-  return d?.type ?? "both";
+  return d?.type ?? "fingers";
 }
 
 export function CareDrawer({

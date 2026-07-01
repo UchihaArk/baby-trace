@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useBaby } from "@/components/baby/baby-provider";
 import { deleteBaby } from "@/lib/mutations";
+import { getBirthExtras } from "@/lib/chinese-calendar";
 import { GENDER_OPTIONS } from "@/lib/baby";
 
 export default function ManagePage() {
@@ -35,6 +36,7 @@ export default function ManagePage() {
   const genderLabel = baby.gender
     ? GENDER_OPTIONS.find((g) => g.value === baby.gender)?.label ?? "未填写"
     : "未填写";
+  const extras = getBirthExtras(baby.birthDate);
 
   async function onDelete() {
     const ok = await deleteBaby(baby!.id, baby!.name);
@@ -56,14 +58,31 @@ export default function ManagePage() {
             <dt className="text-muted-foreground">乳名</dt>
             <dd className="font-medium">{baby.name}</dd>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-muted-foreground">出生日期</dt>
-            <dd className="font-medium">{baby.birthDate}</dd>
+          <div className="flex justify-between gap-3">
+            <dt className="shrink-0 text-muted-foreground">出生日期</dt>
+            <dd className="text-right">
+              <span className="font-medium">{baby.birthDate}</span>
+              {extras && (
+                <span className="mt-0.5 block text-xs text-muted-foreground">农历{extras.lunar}</span>
+              )}
+            </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">性别</dt>
             <dd className="font-medium">{genderLabel}</dd>
           </div>
+          {extras && (
+            <>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">星座</dt>
+                <dd className="font-medium">{extras.zodiac}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">属相</dt>
+                <dd className="font-medium">{extras.shengxiao}</dd>
+              </div>
+            </>
+          )}
         </dl>
 
         <div className="my-4 border-t border-border" />
