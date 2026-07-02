@@ -17,27 +17,41 @@ export const metadata: Metadata = {
     title: "拾光记",
     statusBarStyle: "black-translucent",
     startupImage: [
+      // 注意：media 不要加 "screen and " 前缀，iOS 匹配 apple-touch-startup-image 时
+      // 带该前缀会失效（与 shiye-books 实测一致）。
       {
-        url: "/icons/apple-splash-1125-2432.png",
-        media:
-          "screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)",
+        url: "/icons/splash-640x1136.png",
+        media: "(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)",
       },
       {
-        url: "/icons/apple-splash-1170-2532.png",
-        media:
-          "screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
+        url: "/icons/splash-750x1334.png",
+        media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)",
       },
       {
-        url: "/icons/apple-splash-1179-2556.png",
-        media:
-          "screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)",
+        url: "/icons/splash-1125x2436.png",
+        media: "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)",
       },
       {
-        url: "/icons/apple-splash-1284-2778.png",
-        media:
-          "screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)",
+        url: "/icons/splash-1170x2532.png",
+        media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
       },
-      { url: "/icons/apple-splash-1170-2532.png" },
+      {
+        url: "/icons/splash-1179x2556.png",
+        media: "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/icons/splash-1242x2688.png",
+        media: "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/icons/splash-1284x2778.png",
+        media: "(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/icons/splash-1290x2796.png",
+        media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      { url: "/icons/splash-1170x2532.png" },
     ],
   },
   icons: {
