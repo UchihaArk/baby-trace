@@ -15,6 +15,9 @@ export type TodayStats = {
   bottleMl: number;
   breastMin: number;
   diaperCount: number;
+  wetCount: number;
+  dirtyCount: number;
+  feedCount: number;
   pumpMl: number;
   lastFeed: ReturnType<typeof toLog> | null;
   lastPump: ReturnType<typeof toLog> | null;
@@ -40,7 +43,7 @@ export type Summary = {
   care: { bath: CareInterval; haircut: CareInterval; nail: CareInterval };
 };
 
-function safeParse(s: string): { method?: string } | null {
+function safeParse(s: string): { method?: string; type?: string } | null {
   try {
     return JSON.parse(s);
   } catch {
@@ -76,15 +79,22 @@ export const statsRoutes = new Hono<AppEnv>()
     let bottleMl = 0;
     let breastMin = 0;
     let diaperCount = 0;
+    let wetCount = 0;
+    let dirtyCount = 0;
+    let feedCount = 0;
     let pumpMl = 0;
 
     for (const r of todayRows) {
       if (r.activityType === "feed") {
+        feedCount += 1;
         const d = r.details ? safeParse(r.details) : null;
         if (d?.method === "bottle") bottleMl += r.amount ?? 0;
         else if (d?.method === "breast") breastMin += r.amount ?? 0;
       } else if (r.activityType === "diaper") {
         diaperCount += 1;
+        const dd = r.details ? safeParse(r.details) : null;
+        if (dd?.type === "wet" || dd?.type === "both") wetCount += 1;
+        if (dd?.type === "dirty" || dd?.type === "both") dirtyCount += 1;
       } else if (r.activityType === "pump") {
         pumpMl += r.amount ?? 0;
       }
@@ -145,6 +155,9 @@ export const statsRoutes = new Hono<AppEnv>()
       bottleMl,
       breastMin,
       diaperCount,
+      wetCount,
+      dirtyCount,
+      feedCount,
       pumpMl,
       lastFeed: lastFeed ? toLog(lastFeed) : null,
       lastPump: lastPump ? toLog(lastPump) : null,

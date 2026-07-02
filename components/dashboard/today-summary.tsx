@@ -50,6 +50,9 @@ export function TodaySummary({ babyId }: { babyId: number }) {
   const bottleMl = data?.bottleMl ?? 0;
   const breastMin = data?.breastMin ?? 0;
   const diaperCount = data?.diaperCount ?? 0;
+  const wetCount = data?.wetCount ?? 0;
+  const dirtyCount = data?.dirtyCount ?? 0;
+  const feedCount = data?.feedCount ?? 0;
   const lastFeed = data?.lastFeed;
   const pumpMl = data?.pumpMl ?? 0;
   const lastPump = data?.lastPump;
@@ -57,7 +60,7 @@ export function TodaySummary({ babyId }: { babyId: number }) {
   return (
     <div className="grid grid-cols-2 gap-3">
       <StatCard
-        label="今日奶量"
+        label="今日喂奶"
         value={<MlValue ml={bottleMl} />}
         sub={breastMin > 0 ? `亲喂 ${breastMin} 分钟` : undefined}
         icon={Utensils}
@@ -67,7 +70,7 @@ export function TodaySummary({ babyId }: { babyId: number }) {
       <StatCard
         label="上次喂奶"
         value={lastFeed ? formatRelative(lastFeed.startTime) : "—"}
-        sub={lastFeed ? undefined : "暂无记录"}
+        sub={`今天已喂 ${feedCount} 次`}
         icon={Droplets}
         accentText="text-rose-600 dark:text-rose-400"
         accentBg="bg-rose-500/10"
@@ -82,8 +85,13 @@ export function TodaySummary({ babyId }: { babyId: number }) {
       />
       <StatCard
         label="今日尿布"
-        value={`${diaperCount}`}
-        sub="次"
+        value={
+          <span className="whitespace-nowrap">
+            {diaperCount}
+            <span className="ml-1 text-base font-semibold text-muted-foreground">次</span>
+          </span>
+        }
+        sub={`💩 ${dirtyCount} · 💧 ${wetCount}`}
         icon={Baby}
         accentText="text-amber-600 dark:text-amber-400"
         accentBg="bg-amber-500/10"

@@ -77,11 +77,10 @@ function DiaperForm({
       details,
       notes: notes.trim() || null,
     };
-    const ok = editing
-      ? await updateLog(editing.id, babyId, payload)
-      : !!(await createLog(babyId, payload));
-    setSaving(false);
-    if (ok) onDone();
+    // 立即关闭抽屉：记录走乐观更新即时呈现，保存与刷新在后台进行，失败会 toast 并回滚
+    onDone();
+    if (editing) await updateLog(editing.id, babyId, payload);
+    else await createLog(babyId, payload);
   }
 
   return (
