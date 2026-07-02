@@ -1,4 +1,6 @@
 {
+  // Worker 名称（与 Cloudflare Workers Builds 项目名一致，消除 CI 名字不匹配告警）
+  "name": "baby-trace",
   // OpenNext 构建产物入口
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-06-01",
