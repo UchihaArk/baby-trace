@@ -69,6 +69,10 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
+  // Next.js 15+ 的 appleWebApp.capable 只会输出 `mobile-web-app-capable`（无 apple- 前缀），
+  // 但 iOS 的 apple-touch-startup-image 至今仍要求 apple-mobile-web-app-capable=yes 才显示启动图
+  //（见 vercel/next.js#74524）。这里手动补回，否则 PWA 能 standalone 却不出启动图。
+  other: { "apple-mobile-web-app-capable": "yes" },
 };
 
 export const viewport: Viewport = {
