@@ -34,6 +34,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          // 下移到顶部 header（safe-area + 3.5rem）之下，避免遮挡标题栏
+          top: "calc(env(safe-area-inset-top) + 4rem)",
         } as React.CSSProperties
       }
       toastOptions={{
