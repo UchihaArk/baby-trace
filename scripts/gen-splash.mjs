@@ -25,6 +25,7 @@ await mkdir("public/icons", { recursive: true });
 
 // 现代全面屏 iPhone 主流物理像素尺寸（portrait）
 const sizes = [
+  [1125, 2432], // iPhone X/XS/11 Pro & 12–15 mini
   [1170, 2532], // iPhone 12–15 (6.1")
   [1179, 2556], // iPhone 15/16 Pro (6.1")
   [1284, 2778], // iPhone Plus / Pro Max (6.7")

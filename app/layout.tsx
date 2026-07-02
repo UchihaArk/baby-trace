@@ -15,8 +15,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "拾光记",
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     startupImage: [
+      {
+        url: "/icons/apple-splash-1125-2432.png",
+        media:
+          "screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)",
+      },
       {
         url: "/icons/apple-splash-1170-2532.png",
         media:
