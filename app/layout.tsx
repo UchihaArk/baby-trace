@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeColorSync } from "@/components/theme-color-sync";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({ variable: "--font-sans", subsets: ["latin"] });
@@ -15,6 +16,24 @@ export const metadata: Metadata = {
     capable: true,
     title: "拾光记",
     statusBarStyle: "default",
+    startupImage: [
+      {
+        url: "/icons/apple-splash-1170-2532.png",
+        media:
+          "screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/icons/apple-splash-1179-2556.png",
+        media:
+          "screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/icons/apple-splash-1284-2778.png",
+        media:
+          "screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      { url: "/icons/apple-splash-1170-2532.png" },
+    ],
   },
   icons: {
     icon: [
@@ -29,7 +48,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f43f5e",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
@@ -45,6 +67,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-dvh flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ThemeColorSync />
           {children}
           <Toaster position="top-center" />
         </ThemeProvider>
