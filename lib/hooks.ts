@@ -5,7 +5,7 @@ import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 import { api } from "./api-client";
 import { nowSec, startOfLocalDaySec } from "./time";
-import type { Baby, LogApi, Summary, TodayStats } from "./types";
+import type { Baby, CareSummary, LogApi, Summary, TodayStats, TrendResponse } from "./types";
 
 export const RECENT_LIMIT = 5;
 export const HISTORY_PAGE_SIZE = 30;
@@ -103,6 +103,30 @@ export function useStatsSummary(babyId: number | null, from: number, to: number)
       query: { babyId: String(babyId), from: String(from), to: String(to) },
     });
     if (!res.ok) throw new Error("加载统计失败");
+    return res.json();
+  });
+}
+
+/** 趋势：trailing N 周期聚合（starts 为升序 unix 秒逗号串，to 为末周期结束） */
+export const TREND_KEY = (babyId: number, starts: string, to: number) => `trend:${babyId}:${starts}:${to}`;
+
+export function useStatsTrend(babyId: number | null, starts: string, to: number) {
+  return useSWR<TrendResponse>(babyId != null ? TREND_KEY(babyId, starts, to) : null, async () => {
+    const res = await api.stats.trend.$get({
+      query: { babyId: String(babyId), starts, to: String(to) },
+    });
+    if (!res.ok) throw new Error("加载趋势失败");
+    return res.json();
+  });
+}
+
+/** 护理：全历史平均间隔 */
+export const CARE_KEY = (babyId: number) => `care:${babyId}`;
+
+export function useStatsCare(babyId: number | null) {
+  return useSWR<CareSummary>(babyId != null ? CARE_KEY(babyId) : null, async () => {
+    const res = await api.stats.care.$get({ query: { babyId: String(babyId) } });
+    if (!res.ok) throw new Error("加载护理失败");
     return res.json();
   });
 }

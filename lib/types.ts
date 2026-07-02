@@ -11,7 +11,7 @@ export type Baby = Omit<BabyRow, "accessCodeHash"> & {
   accessCodeVersion: number;
 };
 export type { LogApi } from "@/server/lib";
-export type { TodayStats, Summary, CareInterval } from "@/server/routes/stats";
+export type { TodayStats, Summary, CareInterval, CareSummary, BucketAgg, TrendResponse } from "@/server/routes/stats";
 export type { ActivityType } from "@/server/schema";
 export type {
   LogDetails,

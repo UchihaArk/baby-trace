@@ -33,15 +33,68 @@ const summaryQuerySchema = z.object({
   to: z.string(),
 });
 
+const careQuerySchema = z.object({ babyId: z.string() });
+
+/** 趋势：starts 为升序 unix 秒（本地 0 点对齐），to 为末周期结束（exclusive） */
+const trendQuerySchema = z
+  .object({
+    babyId: z.string(),
+    starts: z.string().regex(/^\d+(,\d+)*$/),
+    to: z.string(),
+  })
+  .refine(
+    (v) => {
+      const xs = v.starts.split(",").map(Number);
+      if (xs.length < 1 || xs.length > 31) return false;
+      for (let i = 0; i < xs.length; i++) {
+        if (!Number.isFinite(xs[i])) return false;
+        if (i > 0 && xs[i] <= xs[i - 1]) return false;
+      }
+      return Number(v.to) > xs[xs.length - 1];
+    },
+    { message: "starts 必须为升序 unix 秒，且 to 须大于最后一个 start" }
+  );
+
 export type CareInterval = { avgSeconds: number; count: number } | null;
+export type CareSummary = { bath: CareInterval; haircut: CareInterval; nail: CareInterval };
 export type Summary = {
   feed: { avg: number; max: number; min: number; count: number } | null;
   breastMinutes: number;
   diaperCount: number;
   pumpMl: number;
   sleepSeconds: number;
-  care: { bath: CareInterval; haircut: CareInterval; nail: CareInterval };
+  care: CareSummary;
 };
+
+/** 单个趋势桶的全部指标聚合（前端按索引与 trendBuckets 对齐） */
+export type BucketAgg = {
+  bottleMl: number;
+  bottleCount: number;
+  bottleMax: number;
+  bottleMin: number;
+  breastMinutes: number;
+  diaperCount: number;
+  wetCount: number;
+  dirtyCount: number;
+  pumpMl: number;
+  pumpCount: number;
+  pumpMax: number;
+  sleepSeconds: number;
+  sleepCount: number;
+  sleepMax: number;
+  bathCount: number;
+  haircutCount: number;
+  nailCount: number;
+  /** 各指标「有数据的天数」——日均的分母；0 表示该期该指标无记录 */
+  daysWithData: {
+    bottle: number;
+    diaper: number;
+    pump: number;
+    sleep: number;
+  };
+};
+
+export type TrendResponse = BucketAgg[];
 
 function safeParse(s: string): { method?: string; type?: string } | null {
   try {
@@ -250,4 +303,162 @@ export const statsRoutes = new Hono<AppEnv>()
       },
     };
     return c.json(summary);
+  })
+
+  /**
+   * GET /stats/trend?babyId=&starts=t0,t1,...&to=tEnd
+   * 一次查询 trailing N 个周期，每周期返回全部指标聚合 + 各指标「有数据的天数」。
+   * starts 为升序 unix 秒（本地 0 点对齐，由前端算好），to 为末周期结束。
+   * 日均 = 总量 ÷ 该指标有数据的天数；当前不完整期与历史完整期因此可比。
+   */
+  .get("/trend", zValidator("query", trendQuerySchema), async (c) => {
+    const q = c.req.valid("query");
+    const db = createDb(c.env.DB);
+    const babyId = Number(q.babyId);
+    const starts = q.starts.split(",").map(Number);
+    const to = Number(q.to);
+    const n = starts.length;
+
+    const rows = await db
+      .select()
+      .from(schema.babyLogs)
+      .where(
+        and(
+          eq(schema.babyLogs.babyId, babyId),
+          gte(schema.babyLogs.startTime, starts[0]),
+          lt(schema.babyLogs.startTime, to)
+        )
+      )
+      .all();
+
+    const acc = Array.from({ length: n }, () => ({
+      bottleMl: 0,
+      bottleCount: 0,
+      bottleMax: 0,
+      bottleMin: Number.POSITIVE_INFINITY,
+      breastMinutes: 0,
+      diaperCount: 0,
+      wetCount: 0,
+      dirtyCount: 0,
+      pumpMl: 0,
+      pumpCount: 0,
+      pumpMax: 0,
+      sleepSeconds: 0,
+      sleepCount: 0,
+      sleepMax: 0,
+      bathCount: 0,
+      haircutCount: 0,
+      nailCount: 0,
+      // 单归属：一条记录只计入其 startTime 所在本地日；跨夜睡眠不拆分。
+      daysBottle: new Set<number>(),
+      daysDiaper: new Set<number>(),
+      daysPump: new Set<number>(),
+      daysSleep: new Set<number>(),
+    }));
+
+    for (const r of rows) {
+      // 落桶：最大的 starts[i] <= startTime（starts 升序）
+      let bi = 0;
+      for (let i = 0; i < n; i++) {
+        if (r.startTime >= starts[i]) bi = i;
+        else break;
+      }
+      const a = acc[bi];
+      // 本地日索引（starts[bi] 已是本地 0 点对齐；中国无 DST，精确）
+      const dayIdx = Math.floor((r.startTime - starts[bi]) / 86400);
+
+      if (r.activityType === "feed") {
+        const d = r.details ? safeParse(r.details) : null;
+        if (d?.method === "bottle" && r.amount != null) {
+          a.bottleMl += r.amount;
+          a.bottleCount += 1;
+          if (r.amount > a.bottleMax) a.bottleMax = r.amount;
+          if (r.amount < a.bottleMin) a.bottleMin = r.amount;
+          a.daysBottle.add(dayIdx);
+        } else if (d?.method === "breast" && r.amount != null) {
+          a.breastMinutes += r.amount;
+        }
+      } else if (r.activityType === "diaper") {
+        a.diaperCount += 1;
+        const dd = r.details ? safeParse(r.details) : null;
+        if (dd?.type === "wet" || dd?.type === "both") a.wetCount += 1;
+        if (dd?.type === "dirty" || dd?.type === "both") a.dirtyCount += 1;
+        a.daysDiaper.add(dayIdx);
+      } else if (r.activityType === "pump") {
+        const ml = r.amount ?? 0;
+        a.pumpMl += ml;
+        a.pumpCount += 1;
+        if (ml > a.pumpMax) a.pumpMax = ml;
+        a.daysPump.add(dayIdx);
+      } else if (r.activityType === "sleep" && r.endTime) {
+        const dur = r.endTime - r.startTime;
+        a.sleepSeconds += dur;
+        a.sleepCount += 1;
+        if (dur > a.sleepMax) a.sleepMax = dur;
+        a.daysSleep.add(dayIdx);
+      } else if (r.activityType === "bath") {
+        a.bathCount += 1;
+      } else if (r.activityType === "haircut") {
+        a.haircutCount += 1;
+      } else if (r.activityType === "nail") {
+        a.nailCount += 1;
+      }
+    }
+
+    const res: TrendResponse = acc.map((a) => ({
+      bottleMl: a.bottleMl,
+      bottleCount: a.bottleCount,
+      bottleMax: a.bottleMax,
+      bottleMin: a.bottleCount > 0 ? a.bottleMin : 0,
+      breastMinutes: a.breastMinutes,
+      diaperCount: a.diaperCount,
+      wetCount: a.wetCount,
+      dirtyCount: a.dirtyCount,
+      pumpMl: a.pumpMl,
+      pumpCount: a.pumpCount,
+      pumpMax: a.pumpMax,
+      sleepSeconds: a.sleepSeconds,
+      sleepCount: a.sleepCount,
+      sleepMax: a.sleepMax,
+      bathCount: a.bathCount,
+      haircutCount: a.haircutCount,
+      nailCount: a.nailCount,
+      daysWithData: {
+        bottle: a.daysBottle.size,
+        diaper: a.daysDiaper.size,
+        pump: a.daysPump.size,
+        sleep: a.daysSleep.size,
+      },
+    }));
+
+    return c.json(res);
+  })
+
+  /**
+   * GET /stats/care?babyId=
+   * 洗澡/理发/剪指甲 的全历史平均间隔（事件稀疏，独立于周期）。
+   */
+  .get("/care", zValidator("query", careQuerySchema), async (c) => {
+    const q = c.req.valid("query");
+    const db = createDb(c.env.DB);
+    const babyId = Number(q.babyId);
+
+    const careRows = await db
+      .select()
+      .from(schema.babyLogs)
+      .where(
+        and(
+          eq(schema.babyLogs.babyId, babyId),
+          inArray(schema.babyLogs.activityType, ["bath", "haircut", "nail"])
+        )
+      )
+      .orderBy(schema.babyLogs.startTime)
+      .all();
+
+    const care: CareSummary = {
+      bath: careInterval(careRows.filter((r) => r.activityType === "bath")),
+      haircut: careInterval(careRows.filter((r) => r.activityType === "haircut")),
+      nail: careInterval(careRows.filter((r) => r.activityType === "nail")),
+    };
+    return c.json(care);
   });

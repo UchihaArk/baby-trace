@@ -88,3 +88,36 @@ function yearLabel(offset: number, y: number): string {
   if (offset === -1) return "去年";
   return `${y}年`;
 }
+
+/** 每个粒度的趋势窗口（看几个点）。日7 / 周4 / 月6 / 季4 / 年3。 */
+export const TREND_WINDOW: Record<Period, number> = {
+  day: 7,
+  week: 4,
+  month: 6,
+  quarter: 4,
+  year: 3,
+};
+
+export type TrendBucketMeta = {
+  from: number;
+  to: number;
+  days: number;
+  label: string;
+  /** 是否为当前（可能尚未结束的）周期 */
+  isCurrent: boolean;
+};
+
+/**
+ * 趋势图用：trailing N 个周期，按时间升序返回（最旧在前、当前在末）。
+ * 复用 periodRange 的边界与文案，保证与单期汇总一致。
+ */
+export function trendBuckets(period: Period): TrendBucketMeta[] {
+  const n = TREND_WINDOW[period];
+  const out: TrendBucketMeta[] = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const offset = -i; // i=n-1 → 最旧；i=0 → 当前
+    const r = periodRange(period, offset);
+    out.push({ ...r, isCurrent: offset === 0 });
+  }
+  return out;
+}
