@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { AppEnv } from "../env";
 import { createDb, schema } from "../db";
-import { createBabySchema, updateBabySchema } from "../inputs";
-import { nowSec } from "../lib";
+import { accessCodeSchema, createBabySchema, updateBabySchema } from "../inputs";
+import { hashAccessCode, nowSec, toPublicBaby, verifyAccessCode } from "../lib";
 
 export const babiesRoutes = new Hono<AppEnv>()
   /** GET /babies —— 列出所有宝宝 */
@@ -15,7 +15,7 @@ export const babiesRoutes = new Hono<AppEnv>()
       .from(schema.babies)
       .orderBy(schema.babies.createdAt)
       .all();
-    return c.json(rows);
+    return c.json(rows.map(toPublicBaby));
   })
 
   /** POST /babies —— 新建宝宝 */
@@ -42,7 +42,7 @@ export const babiesRoutes = new Hono<AppEnv>()
         createdAt: nowSec(),
       })
       .returning();
-    return c.json(row, 201);
+    return c.json(toPublicBaby(row), 201);
   })
 
   /** GET /babies/:name —— 按乳名查询（路由页用） */
@@ -55,7 +55,7 @@ export const babiesRoutes = new Hono<AppEnv>()
       .limit(1)
       .all();
     if (!row) return c.json({ error: "未找到该宝宝" }, 404);
-    return c.json(row);
+    return c.json(toPublicBaby(row));
   })
 
   /** PATCH /babies/:id —— 编辑宝宝 */
@@ -85,7 +85,67 @@ export const babiesRoutes = new Hono<AppEnv>()
       .where(eq(schema.babies.id, id))
       .returning();
     if (!row) return c.json({ error: "未找到" }, 404);
-    return c.json(row);
+    return c.json(toPublicBaby(row));
+  })
+
+  /** PUT /babies/:id/access-code —— 设置/修改访问暗号（版本自增使旧解锁失效） */
+  .put("/:id/access-code", zValidator("json", accessCodeSchema), async (c) => {
+    const id = Number(c.req.param("id"));
+    if (Number.isNaN(id)) return c.json({ error: "Invalid id" }, 400);
+
+    const db = createDb(c.env.DB);
+    const body = c.req.valid("json");
+    const hash = await hashAccessCode(body.code);
+
+    const [row] = await db
+      .update(schema.babies)
+      .set({
+        accessCodeHash: hash,
+        accessCodeVersion: sql`${schema.babies.accessCodeVersion} + 1`,
+      })
+      .where(eq(schema.babies.id, id))
+      .returning();
+    if (!row) return c.json({ error: "未找到" }, 404);
+    return c.json(toPublicBaby(row));
+  })
+
+  /** DELETE /babies/:id/access-code —— 关闭访问暗号（版本仍自增） */
+  .delete("/:id/access-code", async (c) => {
+    const id = Number(c.req.param("id"));
+    if (Number.isNaN(id)) return c.json({ error: "Invalid id" }, 400);
+
+    const db = createDb(c.env.DB);
+    const [row] = await db
+      .update(schema.babies)
+      .set({
+        accessCodeHash: null,
+        accessCodeVersion: sql`${schema.babies.accessCodeVersion} + 1`,
+      })
+      .where(eq(schema.babies.id, id))
+      .returning();
+    if (!row) return c.json({ error: "未找到" }, 404);
+    return c.json(toPublicBaby(row));
+  })
+
+  /** POST /babies/:id/verify-code —— 校验访问暗号 */
+  .post("/:id/verify-code", zValidator("json", accessCodeSchema), async (c) => {
+    const id = Number(c.req.param("id"));
+    if (Number.isNaN(id)) return c.json({ error: "Invalid id" }, 400);
+
+    const db = createDb(c.env.DB);
+    const [row] = await db
+      .select()
+      .from(schema.babies)
+      .where(eq(schema.babies.id, id))
+      .limit(1)
+      .all();
+    if (!row) return c.json({ error: "未找到" }, 404);
+    if (!row.accessCodeHash) return c.json({ error: "未设置暗号" }, 400);
+
+    const body = c.req.valid("json");
+    const ok = await verifyAccessCode(row.accessCodeHash, body.code);
+    if (!ok) return c.json({ error: "暗号错误" }, 401);
+    return c.json({ ok: true });
   })
 
   /** DELETE /babies/:id —— 删除宝宝（同时删除其所有记录） */

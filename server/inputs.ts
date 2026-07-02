@@ -78,3 +78,9 @@ export type CreateBabyInput = z.infer<typeof createBabySchema>;
 
 export const updateBabySchema = createBabySchema.partial();
 export type UpdateBabyInput = z.infer<typeof updateBabySchema>;
+
+/** 访问暗号：1–32 位，允许数字或任意文本 */
+export const accessCodeSchema = z.object({
+  code: z.string().trim().min(1).max(32),
+});
+export type AccessCodeInput = z.infer<typeof accessCodeSchema>;

@@ -180,3 +180,52 @@ export async function deleteBaby(id: number, name: string): Promise<boolean> {
     return false;
   }
 }
+
+// ── 访问暗号 ──────────────────────────────────────────────────────────
+
+/** 设置/修改访问暗号。返回更新后的宝宝（调用方需据此 markUnlocked 保持当前会话可访问） */
+export async function setBabyAccessCode(id: number, code: string): Promise<Baby | null> {
+  try {
+    const res = await api.babies[":id"]["access-code"].$put({
+      param: { id: String(id) },
+      json: { code },
+    });
+    if (!res.ok) throw new Error(await errorMessage(res));
+    const baby: Baby = await res.json();
+    toast.success("访问暗号已设置，再次进入需输入暗号");
+    // 仅刷新列表缓存；当前宝宝缓存交由调用方在 markUnlocked 之后再更新，
+    // 避免先出现「已设暗号但尚未解锁」的一瞬锁屏闪烁。
+    await revalidateBabies();
+    return baby;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "设置失败");
+    return null;
+  }
+}
+
+/** 关闭访问暗号 */
+export async function clearBabyAccessCode(id: number): Promise<boolean> {
+  try {
+    const res = await api.babies[":id"]["access-code"].$delete({ param: { id: String(id) } });
+    if (!res.ok) throw new Error(await errorMessage(res));
+    toast.success("已关闭访问暗号");
+    await revalidateBabies();
+    return true;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "关闭失败");
+    return false;
+  }
+}
+
+/** 校验访问暗号；仅返回是否正确，失败不弹 toast（由锁屏内联提示） */
+export async function verifyBabyAccessCode(id: number, code: string): Promise<boolean> {
+  try {
+    const res = await api.babies[":id"]["verify-code"].$post({
+      param: { id: String(id) },
+      json: { code },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

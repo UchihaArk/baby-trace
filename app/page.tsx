@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Lock, Plus } from "lucide-react";
 import { useBabies } from "@/lib/hooks";
 import { BabyAvatar } from "@/components/baby/baby-avatar";
 import { BabyFormSheet } from "@/components/baby/baby-form-sheet";
@@ -20,7 +20,7 @@ export default function BabyListPage() {
     <div className="mx-auto min-h-dvh w-full max-w-md">
       <header className="sticky top-0 z-30 bg-background px-4 pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-14 max-w-md items-center justify-between">
-          <h1 className="text-lg font-bold">我的宝宝</h1>
+          <h1 className="text-lg font-bold">宝贝清单</h1>
           <ThemeToggle />
         </div>
       </header>
@@ -45,6 +45,7 @@ export default function BabyListPage() {
                     {age.secondary ? ` · ${age.secondary}` : ""}
                   </div>
                 </div>
+                {b.hasAccessCode && <Lock className="size-4 shrink-0 text-muted-foreground" />}
               </Link>
             );
           })

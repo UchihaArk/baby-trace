@@ -13,6 +13,8 @@ export type Gender = (typeof genders)[number];
  * - name：乳名，同时作为 URL 标识（唯一）
  * - birth_date：ISO 日期字符串 "YYYY-MM-DD"
  * - avatar_emoji / avatar_color：头像 emoji + 主题色 key
+ * - access_code_hash：访问暗号的 `salt.hash`（SHA-256），null 表示未设置
+ * - access_code_version：暗号版本，每次设置/修改/关闭自增，用于让客户端旧解锁失效
  */
 export const babies = sqliteTable("babies", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -22,6 +24,8 @@ export const babies = sqliteTable("babies", {
   avatarEmoji: text("avatar_emoji").notNull(),
   avatarColor: text("avatar_color").notNull(),
   createdAt: integer("created_at", { mode: "number" }).notNull(),
+  accessCodeHash: text("access_code_hash"),
+  accessCodeVersion: integer("access_code_version", { mode: "number" }).notNull().default(0),
 });
 
 /**
