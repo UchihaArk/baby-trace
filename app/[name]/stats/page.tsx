@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { RefreshCw } from "lucide-react";
+import { useSWRConfig } from "swr";
 import { useBaby } from "@/components/baby/baby-provider";
 import { Chip } from "@/components/log-entry/chip";
 import { MetricDetail } from "@/components/stats/metric-detail";
@@ -15,7 +17,9 @@ import {
 } from "@/components/stats/metrics";
 import { useStatsCare, useStatsTrend } from "@/lib/hooks";
 import { PERIOD_OPTIONS, TREND_WINDOW, trendBuckets, type Period } from "@/lib/periods";
+import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
 import { formatInterval } from "@/lib/time";
+import { cn } from "@/lib/utils";
 
 const dash = "—";
 
@@ -50,6 +54,16 @@ export default function StatsPage() {
   const to = buckets[n - 1].to;
   const { data: aggs } = useStatsTrend(baby?.id ?? null, starts, to);
   const { data: care } = useStatsCare(baby?.id ?? null);
+  const { mutate } = useSWRConfig();
+  const { pull, refreshing, pulling } = usePullToRefresh(async () => {
+    if (!baby) return;
+    // 重验本宝宝的「趋势」与「护理」
+    await mutate(
+      (k) =>
+        typeof k === "string" &&
+        (k.startsWith(`trend:${baby.id}:`) || k.startsWith(`care:${baby.id}`))
+    );
+  });
 
   if (isLoading || !baby) {
     return <div className="px-4 py-24 text-center text-sm text-muted-foreground">加载中…</div>;
@@ -81,7 +95,18 @@ export default function StatsPage() {
   }
 
   return (
-    <main className="space-y-5 px-4 pb-8 pt-3">
+    <>
+      {/* 下拉刷新指示器（全宽，置于 px-4 容器之外，不参与 space-y） */}
+      <div
+        className={cn(
+          "flex items-center justify-center overflow-hidden text-muted-foreground",
+          !pulling && "transition-[height] duration-200 ease-out"
+        )}
+        style={{ height: refreshing ? 56 : pull }}
+      >
+        <RefreshCw className={cn("size-5 transition-transform", refreshing && "animate-spin")} />
+      </div>
+      <main className="space-y-5 px-4 pb-8 pt-3">
       {/* 粒度 */}
       <div className="flex gap-2 overflow-x-auto">
         {PERIOD_OPTIONS.map((p) => (
@@ -168,7 +193,8 @@ export default function StatsPage() {
           <CareCell emoji="✂️" label="剪指甲" data={care?.nail} />
         </div>
       </section>
-    </main>
+      </main>
+    </>
   );
 }
 

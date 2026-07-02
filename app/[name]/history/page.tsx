@@ -153,7 +153,7 @@ export default function HistoryPage() {
               <button
                 type="button"
                 onClick={() => toggle(g.key)}
-                className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-2 text-left"
+                className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 flex items-center justify-between gap-2 border-b border-border bg-background py-2 text-left"
               >
                 <span className="flex items-baseline gap-2">
                   <span className="text-sm font-semibold">{g.label}</span>
