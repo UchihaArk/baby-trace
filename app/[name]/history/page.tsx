@@ -167,7 +167,7 @@ export default function HistoryPage() {
               {isOpen && (
                 <div className="divide-y divide-border">
                   {g.logs.map((log) => (
-                    <TimelineItem key={log.id} log={log} babyId={baby.id} />
+                    <TimelineItem key={log.id} log={log} babyId={baby.id} showType />
                   ))}
                 </div>
               )}

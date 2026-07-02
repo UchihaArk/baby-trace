@@ -15,7 +15,9 @@ export type TodayStats = {
   bottleMl: number;
   breastMin: number;
   diaperCount: number;
+  pumpMl: number;
   lastFeed: ReturnType<typeof toLog> | null;
+  lastPump: ReturnType<typeof toLog> | null;
   openSleep: ReturnType<typeof toLog> | null;
   lastBath: ReturnType<typeof toLog> | null;
   lastHaircut: ReturnType<typeof toLog> | null;
@@ -74,6 +76,7 @@ export const statsRoutes = new Hono<AppEnv>()
     let bottleMl = 0;
     let breastMin = 0;
     let diaperCount = 0;
+    let pumpMl = 0;
 
     for (const r of todayRows) {
       if (r.activityType === "feed") {
@@ -82,6 +85,8 @@ export const statsRoutes = new Hono<AppEnv>()
         else if (d?.method === "breast") breastMin += r.amount ?? 0;
       } else if (r.activityType === "diaper") {
         diaperCount += 1;
+      } else if (r.activityType === "pump") {
+        pumpMl += r.amount ?? 0;
       }
     }
 
@@ -89,6 +94,14 @@ export const statsRoutes = new Hono<AppEnv>()
       .select()
       .from(schema.babyLogs)
       .where(and(eq(schema.babyLogs.babyId, babyId), eq(schema.babyLogs.activityType, "feed")))
+      .orderBy(desc(schema.babyLogs.startTime))
+      .limit(1)
+      .all();
+
+    const [lastPump] = await db
+      .select()
+      .from(schema.babyLogs)
+      .where(and(eq(schema.babyLogs.babyId, babyId), eq(schema.babyLogs.activityType, "pump")))
       .orderBy(desc(schema.babyLogs.startTime))
       .limit(1)
       .all();
@@ -132,7 +145,9 @@ export const statsRoutes = new Hono<AppEnv>()
       bottleMl,
       breastMin,
       diaperCount,
+      pumpMl,
       lastFeed: lastFeed ? toLog(lastFeed) : null,
+      lastPump: lastPump ? toLog(lastPump) : null,
       openSleep: openSleep ? toLog(openSleep) : null,
       lastBath: lastBath ? toLog(lastBath) : null,
       lastHaircut: lastHaircut ? toLog(lastHaircut) : null,
