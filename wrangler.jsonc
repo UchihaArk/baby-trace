@@ -19,5 +19,5 @@
   ],
   "observability": {
     "enabled": true
-  }
+  },"name": "baby-trace"
 }
