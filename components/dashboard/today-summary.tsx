@@ -21,7 +21,7 @@ function StatCard({
   accentBg: string;
 }) {
   return (
-    <div className="rounded-2xl bg-card p-4 ring-1 ring-foreground/5">
+    <div className="rounded-2xl bg-card p-4 ring-1 ring-foreground/10">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <span className={cn("flex size-6 items-center justify-center rounded-full", accentBg)}>

@@ -121,7 +121,7 @@ export default function StatsPage() {
           </h3>
           <span className="text-xs text-muted-foreground">日均 · {TREND_LABEL[period]}</span>
         </div>
-        <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/5">
+        <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
           <TrendChart
             bars={bars}
             accent={meta.accent}
@@ -182,7 +182,7 @@ function CareCell({
   data: { avgSeconds: number; count: number } | null | undefined;
 }) {
   return (
-    <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/5">
+    <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
       <div className="text-xs text-muted-foreground">
         {emoji} {label}
       </div>

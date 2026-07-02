@@ -75,7 +75,7 @@ function LastCareCard({
   last?: LogApi | null;
 }) {
   return (
-    <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/5">
+    <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
         <span>{emoji}</span>
         <span>上次{label}</span>

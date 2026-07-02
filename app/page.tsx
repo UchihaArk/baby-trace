@@ -35,7 +35,7 @@ export default function BabyListPage() {
               <Link
                 key={b.id}
                 href={`/${encodeURIComponent(b.name)}`}
-                className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/5 transition active:scale-[.99]"
+                className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/10 transition active:scale-[.99]"
               >
                 <BabyAvatar emoji={b.avatarEmoji} color={b.avatarColor} className="size-12 text-2xl" />
                 <div className="min-w-0 flex-1">
