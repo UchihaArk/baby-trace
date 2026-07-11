@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Droplets, Baby, Utensils } from "lucide-react";
 import { useBaby } from "@/components/baby/baby-provider";
 import { useTodayStats } from "@/lib/hooks";
-import { completedMonths, gapClock, gapState, suggestIntervalSec } from "@/lib/feed-intervals";
+import { completedMonths, gapClock, gapState, suggestIntervalSec, type GapLevel } from "@/lib/feed-intervals";
 import { formatRelative, nowSec } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,14 @@ function useNowTick(active: boolean) {
   return nowSec();
 }
 
+/** 卡片铺色：按间隔状态给整张卡上背景/边框。Tailwind 字面量。 */
+const TONE_CARD: Record<GapLevel | "default", string> = {
+  ok: "bg-emerald-500/10 ring-emerald-500/30",
+  focus: "bg-amber-500/10 ring-amber-500/30",
+  suggest: "bg-rose-500/10 ring-rose-500/30",
+  default: "bg-card ring-foreground/10",
+};
+
 function StatCard({
   label,
   value,
@@ -26,6 +34,7 @@ function StatCard({
   icon: Icon,
   accentText,
   accentBg,
+  tone = "default",
 }: {
   label: string;
   value: React.ReactNode;
@@ -33,9 +42,10 @@ function StatCard({
   icon: React.ComponentType<{ className?: string }>;
   accentText: string;
   accentBg: string;
+  tone?: GapLevel | "default";
 }) {
   return (
-    <div className="rounded-2xl bg-card p-4 ring-1 ring-foreground/10">
+    <div className={cn("rounded-2xl p-4 ring-1 transition-colors", TONE_CARD[tone])}>
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <span className={cn("flex size-6 items-center justify-center rounded-full", accentBg)}>
@@ -96,21 +106,12 @@ export function TodaySummary({ babyId }: { babyId: number }) {
       />
       <StatCard
         label="上次喂奶"
-        value={
-          lastFeed ? (
-            <span className="flex items-center gap-1.5">
-              {feedGapSt && <span className={cn("size-2 shrink-0 rounded-full", feedGapSt.dotClass)} />}
-              {gapClock(feedGap)}
-            </span>
-          ) : (
-            "—"
-          )
-        }
+        tone={feedGapSt?.level ?? "default"}
+        value={lastFeed ? gapClock(feedGap) : "—"}
         sub={
           lastFeed ? (
             <span className={cn(feedGapSt?.textClass && "font-medium", feedGapSt?.textClass)}>
-              {feedGapSt?.label && `${feedGapSt.label} · `}
-              {formatRelative(lastFeed.startTime)}
+              {feedGapSt?.label ? `${feedGapSt.label} · ${formatRelative(lastFeed.startTime)}` : formatRelative(lastFeed.startTime)}
             </span>
           ) : (
             "今天还没喂"
@@ -122,16 +123,8 @@ export function TodaySummary({ babyId }: { babyId: number }) {
       />
       <StatCard
         label="今日产奶"
-        value={
-          lastPump ? (
-            <span className="flex items-center gap-1.5">
-              {pumpGapSt && <span className={cn("size-2 shrink-0 rounded-full", pumpGapSt.dotClass)} />}
-              <MlValue ml={pumpMl} />
-            </span>
-          ) : (
-            <MlValue ml={pumpMl} />
-          )
-        }
+        tone={pumpGapSt?.level ?? "default"}
+        value={<MlValue ml={pumpMl} />}
         sub={
           lastPump ? (
             <span className={cn(pumpGapSt?.textClass && "font-medium", pumpGapSt?.textClass)}>
