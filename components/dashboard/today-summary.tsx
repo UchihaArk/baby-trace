@@ -5,7 +5,7 @@ import { Droplets, Baby, Utensils } from "lucide-react";
 import { useBaby } from "@/components/baby/baby-provider";
 import { useTodayStats } from "@/lib/hooks";
 import { completedMonths, gapClock, gapState, suggestIntervalSec, type GapLevel } from "@/lib/feed-intervals";
-import { formatRelative, nowSec } from "@/lib/time";
+import { nowSec } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
 /** 每秒 tick 一次，驱动「上次喂奶/吸奶」间隔实时更新 */
@@ -111,7 +111,7 @@ export function TodaySummary({ babyId }: { babyId: number }) {
         sub={
           lastFeed ? (
             <span className={cn(feedGapSt?.textClass && "font-medium", feedGapSt?.textClass)}>
-              {feedGapSt?.label ? `${feedGapSt.label} · ${formatRelative(lastFeed.startTime)}` : formatRelative(lastFeed.startTime)}
+              {feedGapSt?.label ?? "距上次"}
             </span>
           ) : (
             "今天还没喂"
