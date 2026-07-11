@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Droplets, Baby, Utensils } from "lucide-react";
+import { useBaby } from "@/components/baby/baby-provider";
 import { useTodayStats } from "@/lib/hooks";
+import { completedMonths, gapClock, gapState, suggestIntervalSec } from "@/lib/feed-intervals";
 import { formatRelative, nowSec } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
-/** 喂奶间隔阈值（秒）：< FOCUS 关注 / > SUGGEST 建议喂养 */
-const FEED_FOCUS_SEC = 2 * 3600;
-const FEED_SUGGEST_SEC = 3 * 3600;
-
-/** 每秒 tick 一次，驱动「上次喂奶」间隔实时更新 */
+/** 每秒 tick 一次，驱动「上次喂奶/吸奶」间隔实时更新 */
 function useNowTick(active: boolean) {
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -19,41 +17,6 @@ function useNowTick(active: boolean) {
     return () => clearInterval(id);
   }, [active]);
   return nowSec();
-}
-
-/** 根据距上次喂奶的秒数，返回间隔状态 */
-function feedGapState(gapSec: number): {
-  level: "ok" | "focus" | "suggest";
-  label: string;
-  dotClass: string;
-  textClass: string;
-} {
-  if (gapSec >= FEED_SUGGEST_SEC) {
-    return {
-      level: "suggest",
-      label: "建议喂养",
-      dotClass: "bg-rose-500 animate-pulse",
-      textClass: "text-rose-600 dark:text-rose-400",
-    };
-  }
-  if (gapSec >= FEED_FOCUS_SEC) {
-    return {
-      level: "focus",
-      label: "该关注了",
-      dotClass: "bg-amber-500",
-      textClass: "text-amber-600 dark:text-amber-400",
-    };
-  }
-  return { level: "ok", label: "", dotClass: "bg-emerald-500", textClass: "" };
-}
-
-/** 把秒数格式化为「X时Y分」/「X分」 */
-function gapClock(sec: number): string {
-  const m = Math.floor(sec / 60);
-  if (m < 60) return `${m} 分钟`;
-  const h = Math.floor(m / 60);
-  const mm = m % 60;
-  return mm > 0 ? `${h} 时 ${mm} 分` : `${h} 时`;
 }
 
 function StatCard({
@@ -96,6 +59,7 @@ function MlValue({ ml }: { ml: number }) {
 }
 
 export function TodaySummary({ babyId }: { babyId: number }) {
+  const { baby } = useBaby();
   const { data } = useTodayStats(babyId);
 
   const bottleMl = data?.bottleMl ?? 0;
@@ -107,10 +71,18 @@ export function TodaySummary({ babyId }: { babyId: number }) {
   const pumpMl = data?.pumpMl ?? 0;
   const lastPump = data?.lastPump;
 
-  // 「上次喂奶」间隔：有 lastFeed 时每秒 tick 实时更新
-  const now = useNowTick(!!lastFeed);
+  // 月龄 → 喂奶/吸奶的建议间隔（按宝宝实际年龄分段）
+  const months = baby ? completedMonths(new Date(baby.birthDate)) : 0;
+  const feedInterval = suggestIntervalSec("feed", months);
+  const pumpInterval = suggestIntervalSec("pump", months);
+
+  // 有任一「上次」记录时启动每秒 tick
+  const now = useNowTick(!!lastFeed || !!lastPump);
+
   const feedGap = lastFeed ? Math.max(0, now - lastFeed.startTime) : 0;
-  const gap = lastFeed ? feedGapState(feedGap) : null;
+  const feedGapSt = lastFeed ? gapState(feedGap, feedInterval, "喂养") : null;
+  const pumpGap = lastPump ? Math.max(0, now - lastPump.startTime) : 0;
+  const pumpGapSt = lastPump ? gapState(pumpGap, pumpInterval, "吸奶") : null;
 
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -127,7 +99,7 @@ export function TodaySummary({ babyId }: { babyId: number }) {
         value={
           lastFeed ? (
             <span className="flex items-center gap-1.5">
-              {gap && <span className={cn("size-2 shrink-0 rounded-full", gap.dotClass)} />}
+              {feedGapSt && <span className={cn("size-2 shrink-0 rounded-full", feedGapSt.dotClass)} />}
               {gapClock(feedGap)}
             </span>
           ) : (
@@ -136,8 +108,8 @@ export function TodaySummary({ babyId }: { babyId: number }) {
         }
         sub={
           lastFeed ? (
-            <span className={cn(gap?.textClass && "font-medium", gap?.textClass)}>
-              {gap?.label && `${gap.label} · `}
+            <span className={cn(feedGapSt?.textClass && "font-medium", feedGapSt?.textClass)}>
+              {feedGapSt?.label && `${feedGapSt.label} · `}
               {formatRelative(lastFeed.startTime)}
             </span>
           ) : (
@@ -150,8 +122,27 @@ export function TodaySummary({ babyId }: { babyId: number }) {
       />
       <StatCard
         label="今日产奶"
-        value={<MlValue ml={pumpMl} />}
-        sub={lastPump ? `上次吸奶 ${formatRelative(lastPump.startTime)}` : "暂无记录"}
+        value={
+          lastPump ? (
+            <span className="flex items-center gap-1.5">
+              {pumpGapSt && <span className={cn("size-2 shrink-0 rounded-full", pumpGapSt.dotClass)} />}
+              <MlValue ml={pumpMl} />
+            </span>
+          ) : (
+            <MlValue ml={pumpMl} />
+          )
+        }
+        sub={
+          lastPump ? (
+            <span className={cn(pumpGapSt?.textClass && "font-medium", pumpGapSt?.textClass)}>
+              {pumpGapSt?.label
+                ? `${pumpGapSt.label} · 距上次 ${gapClock(pumpGap)}`
+                : `距上次 ${gapClock(pumpGap)}`}
+            </span>
+          ) : (
+            "暂无记录"
+          )
+        }
         icon={Droplets}
         accentText="text-teal-600 dark:text-teal-400"
         accentBg="bg-teal-500/10"

@@ -1,0 +1,73 @@
+/**
+ * 喂奶 / 吸奶的月龄分段建议间隔。
+ * 根据宝宝出生日期计算「完整月龄」，返回该阶段的建议间隔（秒）。
+ *
+ * 阈值依据（泌乳与喂养常识，仅作提示参考，非医学处方）：
+ * - 喂奶：0–6 月 3h、≥6 月 4h（添加辅食后频次降低）。
+ * - 吸奶：0–6 周（≈1.5 月）3h（建立泌乳、防涨奶）、1.5–6 月 4h（供需平衡期）、≥6 月 6h。
+ */
+export type FeedKind = "feed" | "pump";
+
+/** 从出生到指定时刻的完整月数（本月还没到出生日则少算一个月） */
+export function completedMonths(birth: Date, now = new Date()): number {
+  const n = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+  return now.getDate() < birth.getDate() ? n - 1 : n;
+}
+
+/** 按月龄返回某类喂养的建议间隔（秒）。 */
+export function suggestIntervalSec(kind: FeedKind, months: number): number {
+  const HOUR = 3600;
+  if (kind === "feed") {
+    return months >= 6 ? 4 * HOUR : 3 * HOUR;
+  }
+  // pump
+  if (months < 2) return 3 * HOUR; // 0–约 6 周：建立泌乳期
+  if (months < 6) return 4 * HOUR; // 1.5–6 月：供需平衡期
+  return 6 * HOUR; // ≥ 6 月：辅食期，频次明显降低
+}
+
+export type GapLevel = "ok" | "focus" | "suggest";
+
+export type GapState = {
+  level: GapLevel;
+  label: string; // 「该关注了」/「建议喂养」/「建议吸奶」/「」
+  /** 状态圆点类（Tailwind 字面量） */
+  dotClass: string;
+  /** 文字色（Tailwind 字面量）；ok 时为空串 */
+  textClass: string;
+};
+
+/** 缓冲窗口：超过建议间隔多少秒后进入 focus（关注） */
+const FOCUS_BUFFER = 30 * 60; // 30 分钟
+/** 进入 suggest（建议操作）的额外阈值：超过建议间隔 + 1 小时 */
+const SUGGEST_BUFFER = 60 * 60;
+
+/** 根据距上次操作的秒数 + 建议间隔，返回间隔状态 */
+export function gapState(gapSec: number, intervalSec: number, action: string): GapState {
+  if (gapSec >= intervalSec + SUGGEST_BUFFER) {
+    return {
+      level: "suggest",
+      label: `建议${action}`,
+      dotClass: "bg-rose-500 animate-pulse",
+      textClass: "text-rose-600 dark:text-rose-400",
+    };
+  }
+  if (gapSec >= intervalSec + FOCUS_BUFFER) {
+    return {
+      level: "focus",
+      label: "该关注了",
+      dotClass: "bg-amber-500",
+      textClass: "text-amber-600 dark:text-amber-400",
+    };
+  }
+  return { level: "ok", label: "", dotClass: "bg-emerald-500", textClass: "" };
+}
+
+/** 把秒数格式化为「X时Y分」/「X分」（展示间隔用） */
+export function gapClock(sec: number): string {
+  const m = Math.floor(sec / 60);
+  if (m < 60) return `${m} 分钟`;
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return mm > 0 ? `${h} 时 ${mm} 分` : `${h} 时`;
+}
