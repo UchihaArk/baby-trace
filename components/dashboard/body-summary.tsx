@@ -84,7 +84,7 @@ function MeasureCard({
             {cfg.format(latest.valueGrams)}
           </div>
           <div className="truncate text-xs text-muted-foreground">
-            {formatRelative(latest.measuredAt)}
+            上次测量 {formatRelative(latest.measuredAt)}
             {delta && ` · ${delta}`}
           </div>
         </>

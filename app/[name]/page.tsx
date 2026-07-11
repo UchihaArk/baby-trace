@@ -44,8 +44,8 @@ export default function DashboardPage() {
       <div className="space-y-6 px-4 pb-8 pt-3">
         <TodayBanner />
         <TodaySummary babyId={baby.id} />
-        <BodySummary babyId={baby.id} />
         <ActionDock babyId={baby.id} />
+        <BodySummary babyId={baby.id} />
       </div>
     </>
   );
