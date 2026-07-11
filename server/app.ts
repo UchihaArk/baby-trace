@@ -3,6 +3,7 @@ import { logger } from "hono/logger";
 import type { AppEnv } from "./env";
 import { babiesRoutes } from "./routes/babies";
 import { logsRoutes } from "./routes/logs";
+import { measurementsRoutes } from "./routes/measurements";
 import { statsRoutes } from "./routes/stats";
 import { sleepRoutes } from "./routes/sleep";
 
@@ -10,6 +11,7 @@ const app = new Hono<AppEnv>()
   .use("*", logger())
   .route("/babies", babiesRoutes)
   .route("/logs", logsRoutes)
+  .route("/measurements", measurementsRoutes)
   .route("/stats", statsRoutes)
   .route("/sleep", sleepRoutes);
 

@@ -5,7 +5,16 @@ import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 import { api } from "./api-client";
 import { nowSec, startOfLocalDaySec } from "./time";
-import type { Baby, CareSummary, LogApi, Summary, TodayStats, TrendResponse } from "./types";
+import type {
+  Baby,
+  BabyMeasurement,
+  CareSummary,
+  LogApi,
+  MeasurementKind,
+  Summary,
+  TodayStats,
+  TrendResponse,
+} from "./types";
 
 export const RECENT_LIMIT = 5;
 export const HISTORY_PAGE_SIZE = 30;
@@ -129,6 +138,21 @@ export function useStatsCare(babyId: number | null) {
     if (!res.ok) throw new Error("加载护理失败");
     return res.json();
   });
+}
+
+/** 身体测量（体重 / 身高）：某宝宝某种类的全部测量，按时间升序 */
+export const MEASUREMENTS_KEY = (babyId: number, kind: MeasurementKind) =>
+  `measurements:${babyId}:${kind}`;
+
+export function useMeasurements(babyId: number | null, kind: MeasurementKind) {
+  return useSWR<BabyMeasurement[]>(
+    babyId != null ? MEASUREMENTS_KEY(babyId, kind) : null,
+    async () => {
+      const res = await api.measurements.$get({ query: { babyId: String(babyId), kind } });
+      if (!res.ok) throw new Error("加载测量失败");
+      return res.json();
+    }
+  );
 }
 
 export function useElapsed(startTsSec: number | null): number | null {

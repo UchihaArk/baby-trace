@@ -5,7 +5,7 @@ import { useSWRConfig } from "swr";
 import { TodayBanner } from "@/components/dashboard/today-banner";
 import { TodaySummary } from "@/components/dashboard/today-summary";
 import { ActionDock } from "@/components/dashboard/action-dock";
-import { Timeline } from "@/components/dashboard/timeline";
+import { BodySummary } from "@/components/dashboard/body-summary";
 import { useBaby } from "@/components/baby/baby-provider";
 import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
 import { cn } from "@/lib/utils";
@@ -15,11 +15,13 @@ export default function DashboardPage() {
   const { mutate } = useSWRConfig();
   const { pull, refreshing, pulling } = usePullToRefresh(async () => {
     if (!baby) return;
-    // 重验本宝宝的「今日统计」与「最近动态」
+    // 重验本宝宝的「今日统计」「最近动态」与「身体测量」
     await mutate(
       (k) =>
         typeof k === "string" &&
-        (k.startsWith(`stats:${baby.id}:`) || k.startsWith(`logs:${baby.id}:`))
+        (k.startsWith(`stats:${baby.id}:`) ||
+          k.startsWith(`logs:${baby.id}:`) ||
+          k.startsWith(`measurements:${baby.id}:`))
     );
   });
 
@@ -42,8 +44,8 @@ export default function DashboardPage() {
       <div className="space-y-6 px-4 pb-8 pt-3">
         <TodayBanner />
         <TodaySummary babyId={baby.id} />
+        <BodySummary babyId={baby.id} />
         <ActionDock babyId={baby.id} />
-        <Timeline babyId={baby.id} />
       </div>
     </>
   );

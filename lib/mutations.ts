@@ -4,15 +4,19 @@ import { mutate } from "swr";
 import { toast } from "sonner";
 import { api } from "./api-client";
 import { notifyLogsMutated } from "./log-events";
-import { BABIES_KEY, BABY_KEY, RECENT_KEY, RECENT_LIMIT } from "./hooks";
+import { BABIES_KEY, BABY_KEY, MEASUREMENTS_KEY, RECENT_KEY, RECENT_LIMIT } from "./hooks";
 import { nowSec } from "./time";
 import type {
   Baby,
+  BabyMeasurement,
   CreateBabyInput,
   CreateLogInput,
+  CreateMeasurementInput,
   LogApi,
+  MeasurementKind,
   UpdateBabyInput,
   UpdateLogInput,
+  UpdateMeasurementInput,
 } from "./types";
 
 const revalidateLogs = (babyId: number) => {
@@ -177,6 +181,93 @@ export async function deleteBaby(id: number, name: string): Promise<boolean> {
     return true;
   } catch (e) {
     toast.error(e instanceof Error ? e.message : "删除失败");
+    return false;
+  }
+}
+
+// ── 身体测量（体重 / 身高） ──────────────────────────────────────────
+
+/** 失效某宝宝所有种类的测量缓存 */
+const revalidateMeasurements = (babyId: number) =>
+  mutate((k) => typeof k === "string" && k.startsWith(`measurements:${babyId}:`));
+
+/** 新建测量（乐观）：立即插入到对应 kind 的升序列表末尾 */
+export async function createMeasurement(
+  babyId: number,
+  input: CreateMeasurementInput
+): Promise<BabyMeasurement | null> {
+  const kind = input.kind as MeasurementKind;
+  const temp: BabyMeasurement = {
+    id: tmpId(),
+    babyId,
+    kind,
+    measuredAt: input.measuredAt,
+    valueGrams: input.valueGrams,
+    notes: input.notes ?? null,
+    createdAt: nowSec(),
+  };
+  const key = MEASUREMENTS_KEY(babyId, kind);
+  await mutate(key, (list?: BabyMeasurement[]) => [...(list ?? []), temp], { revalidate: false });
+
+  try {
+    const res = await api.measurements.$post({ json: input });
+    if (!res.ok) throw new Error(await errorMessage(res));
+    const created: BabyMeasurement = await res.json();
+    toast.success("已记录 ✓");
+    await revalidateMeasurements(babyId);
+    return created;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "保存失败");
+    await revalidateMeasurements(babyId);
+    return null;
+  }
+}
+
+/** 编辑测量（乐观）。
+ *  注意：测量值/时间/备注的编辑不涉及 kind 变更，乐观更新作用于「编辑前 kind」的列表；
+ *  极少出现的 kind 互改（体重↔身高）由后端成功后的 revalidateMeasurements 兜底全量刷新。 */
+export async function updateMeasurement(
+  id: number,
+  babyId: number,
+  kind: MeasurementKind,
+  patch: UpdateMeasurementInput
+): Promise<boolean> {
+  const key = MEASUREMENTS_KEY(babyId, kind);
+  await mutate(
+    key,
+    (list?: BabyMeasurement[]) => list?.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+    { revalidate: false }
+  );
+
+  try {
+    const res = await api.measurements[":id"].$patch({ param: { id: String(id) }, json: patch });
+    if (!res.ok) throw new Error(await errorMessage(res));
+    toast.success("已更新 ✓");
+    await revalidateMeasurements(babyId);
+    return true;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "更新失败");
+    await revalidateMeasurements(babyId);
+    return false;
+  }
+}
+
+/** 删除测量（乐观） */
+export async function deleteMeasurement(id: number, babyId: number, kind: MeasurementKind): Promise<boolean> {
+  const key = MEASUREMENTS_KEY(babyId, kind);
+  await mutate(key, (list?: BabyMeasurement[]) => list?.filter((m) => m.id !== id), {
+    revalidate: false,
+  });
+
+  try {
+    const res = await api.measurements[":id"].$delete({ param: { id: String(id) } });
+    if (!res.ok) throw new Error(await errorMessage(res));
+    toast.success("已删除");
+    await revalidateMeasurements(babyId);
+    return true;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "删除失败");
+    await revalidateMeasurements(babyId);
     return false;
   }
 }

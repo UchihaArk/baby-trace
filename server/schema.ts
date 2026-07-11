@@ -4,6 +4,10 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 export const activityTypes = ["feed", "diaper", "sleep", "pump", "bath", "haircut", "nail"] as const;
 export type ActivityType = (typeof activityTypes)[number];
 
+/** 测量种类：weight 体重 / height 身高。独立于活动日志，为后续头围等扩展预留。 */
+export const measurementKinds = ["weight", "height"] as const;
+export type MeasurementKind = (typeof measurementKinds)[number];
+
 /** 性别 */
 export const genders = ["male", "female", "other"] as const;
 export type Gender = (typeof genders)[number];
@@ -46,7 +50,26 @@ export const babyLogs = sqliteTable("baby_logs", {
   createdAt: integer("created_at", { mode: "number" }).notNull(),
 });
 
+/**
+ * baby_measurements —— 身体测量记录（体重 / 身高，独立于活动日志）
+ * - kind：测量种类。
+ * - measured_at：Unix 秒（测量时刻）。
+ * - value_grams：统一整数存储。体重存克（8200 = 8.2kg），身高存毫米（680 = 68.0cm）。
+ *   复用同一列避免拆表；kind 决定单位语义。
+ */
+export const babyMeasurements = sqliteTable("baby_measurements", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  babyId: integer("baby_id", { mode: "number" }).notNull().references(() => babies.id),
+  kind: text("kind", { enum: measurementKinds }).notNull(),
+  measuredAt: integer("measured_at", { mode: "number" }).notNull(),
+  valueGrams: integer("value_grams", { mode: "number" }).notNull(),
+  notes: text("notes"),
+  createdAt: integer("created_at", { mode: "number" }).notNull(),
+});
+
 export type Baby = typeof babies.$inferSelect;
 export type NewBaby = typeof babies.$inferInsert;
 export type BabyLog = typeof babyLogs.$inferSelect;
 export type NewBabyLog = typeof babyLogs.$inferInsert;
+export type BabyMeasurement = typeof babyMeasurements.$inferSelect;
+export type NewBabyMeasurement = typeof babyMeasurements.$inferInsert;

@@ -5,6 +5,7 @@ import { RefreshCw } from "lucide-react";
 import { useSWRConfig } from "swr";
 import { useBaby } from "@/components/baby/baby-provider";
 import { Chip } from "@/components/log-entry/chip";
+import { GrowthStats } from "@/components/stats/growth-stats";
 import { MetricDetail } from "@/components/stats/metric-detail";
 import { TrendChart, type TrendBar } from "@/components/stats/trend-chart";
 import {
@@ -22,6 +23,8 @@ import { formatInterval } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
 const dash = "—";
+
+type Tab = "record" | "growth";
 
 const TREND_LABEL: Record<Period, string> = {
   day: "最近 7 日",
@@ -43,6 +46,7 @@ function shortLabel(from: number, period: Period): string {
 
 export default function StatsPage() {
   const { baby, isLoading } = useBaby();
+  const [tab, setTab] = useState<Tab>("record");
   const [period, setPeriod] = useState<Period>("day");
   const [metric, setMetric] = useState<Metric>("feed");
 
@@ -57,11 +61,13 @@ export default function StatsPage() {
   const { mutate } = useSWRConfig();
   const { pull, refreshing, pulling } = usePullToRefresh(async () => {
     if (!baby) return;
-    // 重验本宝宝的「趋势」与「护理」
+    // 重验本宝宝的「趋势」「护理」与「身体测量」
     await mutate(
       (k) =>
         typeof k === "string" &&
-        (k.startsWith(`trend:${baby.id}:`) || k.startsWith(`care:${baby.id}`))
+        (k.startsWith(`trend:${baby.id}:`) ||
+          k.startsWith(`care:${baby.id}`) ||
+          k.startsWith(`measurements:${baby.id}:`))
     );
   });
 
@@ -106,95 +112,135 @@ export default function StatsPage() {
       >
         <RefreshCw className={cn("size-5 transition-transform", refreshing && "animate-spin")} />
       </div>
-      <main className="space-y-5 px-4 pb-8 pt-3">
-      {/* 粒度 */}
-      <div className="flex gap-2 overflow-x-auto">
-        {PERIOD_OPTIONS.map((p) => (
-          <Chip
-            key={p.value}
-            selected={period === p.value}
-            onClick={() => changePeriod(p.value)}
-            selectedClass="border-transparent bg-primary text-primary-foreground"
-            className="min-h-9 flex-none px-4 py-1.5 text-xs"
-          >
-            {p.label}
-          </Chip>
-        ))}
-      </div>
 
-      {/* 指标 */}
-      <div className="grid grid-cols-4 gap-2">
-        {METRICS.map((m) => (
-          <Chip
-            key={m.key}
-            selected={metric === m.key}
-            onClick={() => setMetric(m.key)}
-            selectedClass={ACCENT_SELECTED[m.accent]}
-            className="min-h-9 px-1 py-1.5 text-xs"
-          >
-            <span className="mr-0.5">{m.emoji}</span>
-            {m.label}
-          </Chip>
-        ))}
-      </div>
-
-      {/* 趋势图 */}
-      <section>
-        <div className="mb-2 flex items-center justify-between px-1">
-          <h3 className="text-sm font-semibold">
-            {meta.emoji} {meta.label}量趋势
-          </h3>
-          <span className="text-xs text-muted-foreground">日均 · {TREND_LABEL[period]}</span>
+      {/* 顶部 Tab：记录 / 成长 */}
+      <div className="px-4 pt-3">
+        <div className="grid grid-cols-2 gap-1 rounded-2xl bg-muted/60 p-1">
+          <TabButton active={tab === "record"} onClick={() => setTab("record")}>
+            记录
+          </TabButton>
+          <TabButton active={tab === "growth"} onClick={() => setTab("growth")}>
+            成长
+          </TabButton>
         </div>
-        <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
-          <TrendChart
-            bars={bars}
-            accent={meta.accent}
-            formatValue={meta.format}
-            selectedIndex={sel}
-            onSelect={setSelectedIndex}
-          />
-          <div className="mt-2 border-t border-border/50 pt-2 text-center text-xs text-muted-foreground">
-            {caption}
+      </div>
+
+      {tab === "growth" ? (
+        <GrowthStats babyId={baby.id} />
+      ) : (
+        <main className="space-y-5 px-4 pb-8 pt-3">
+          {/* 粒度 */}
+          <div className="flex gap-2 overflow-x-auto">
+            {PERIOD_OPTIONS.map((p) => (
+              <Chip
+                key={p.value}
+                selected={period === p.value}
+                onClick={() => changePeriod(p.value)}
+                selectedClass="border-transparent bg-primary text-primary-foreground"
+                className="min-h-9 flex-none px-4 py-1.5 text-xs"
+              >
+                {p.label}
+              </Chip>
+            ))}
           </div>
-        </div>
-      </section>
 
-      {/* 选中周期明细 */}
-      <section>
-        <div className="mb-2 flex items-center justify-between px-1">
-          <h3 className="flex items-center gap-2 text-sm font-semibold">
-            {selBucket.label}
-            {selBucket.isCurrent && period !== "day" && (
-              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.65rem] font-medium text-amber-600 dark:text-amber-400">
-                进行中
-              </span>
+          {/* 指标 */}
+          <div className="grid grid-cols-4 gap-2">
+            {METRICS.map((m) => (
+              <Chip
+                key={m.key}
+                selected={metric === m.key}
+                onClick={() => setMetric(m.key)}
+                selectedClass={ACCENT_SELECTED[m.accent]}
+                className="min-h-9 px-1 py-1.5 text-xs"
+              >
+                <span className="mr-0.5">{m.emoji}</span>
+                {m.label}
+              </Chip>
+            ))}
+          </div>
+
+          {/* 趋势图 */}
+          <section>
+            <div className="mb-2 flex items-center justify-between px-1">
+              <h3 className="text-sm font-semibold">
+                {meta.emoji} {meta.label}量趋势
+              </h3>
+              <span className="text-xs text-muted-foreground">日均 · {TREND_LABEL[period]}</span>
+            </div>
+            <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
+              <TrendChart
+                bars={bars}
+                accent={meta.accent}
+                formatValue={meta.format}
+                selectedIndex={sel}
+                onSelect={setSelectedIndex}
+              />
+              <div className="mt-2 border-t border-border/50 pt-2 text-center text-xs text-muted-foreground">
+                {caption}
+              </div>
+            </div>
+          </section>
+
+          {/* 选中周期明细 */}
+          <section>
+            <div className="mb-2 flex items-center justify-between px-1">
+              <h3 className="flex items-center gap-2 text-sm font-semibold">
+                {selBucket.label}
+                {selBucket.isCurrent && period !== "day" && (
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.65rem] font-medium text-amber-600 dark:text-amber-400">
+                    进行中
+                  </span>
+                )}
+              </h3>
+              {period !== "day" && selAgg && (
+                <span className="text-xs text-muted-foreground">{selDays} 天有数据</span>
+              )}
+            </div>
+            {selAgg ? (
+              <MetricDetail metric={metric} agg={selAgg} />
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+                {aggs ? "该期暂无记录" : "加载中…"}
+              </div>
             )}
-          </h3>
-          {period !== "day" && selAgg && (
-            <span className="text-xs text-muted-foreground">{selDays} 天有数据</span>
-          )}
-        </div>
-        {selAgg ? (
-          <MetricDetail metric={metric} agg={selAgg} />
-        ) : (
-          <div className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-            {aggs ? "该期暂无记录" : "加载中…"}
-          </div>
-        )}
-      </section>
+          </section>
 
-      {/* 护理（全历史平均间隔） */}
-      <section>
-        <h3 className="mb-2 px-1 text-sm font-semibold">✂️ 护理 · 全历史平均间隔</h3>
-        <div className="grid grid-cols-3 gap-3">
-          <CareCell emoji="🛁" label="洗澡" data={care?.bath} />
-          <CareCell emoji="💈" label="理发" data={care?.haircut} />
-          <CareCell emoji="✂️" label="剪指甲" data={care?.nail} />
-        </div>
-      </section>
-      </main>
+          {/* 护理（全历史平均间隔） */}
+          <section>
+            <h3 className="mb-2 px-1 text-sm font-semibold">✂️ 护理 · 全历史平均间隔</h3>
+            <div className="grid grid-cols-3 gap-3">
+              <CareCell emoji="🛁" label="洗澡" data={care?.bath} />
+              <CareCell emoji="💈" label="理发" data={care?.haircut} />
+              <CareCell emoji="✂️" label="剪指甲" data={care?.nail} />
+            </div>
+          </section>
+        </main>
+      )}
     </>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-xl py-2 text-sm font-semibold transition",
+        active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+      )}
+    >
+      {children}
+    </button>
   );
 }
 

@@ -6,9 +6,10 @@ import { FeedDrawer } from "./feed-drawer";
 import { DiaperDrawer } from "./diaper-drawer";
 import { PumpDrawer } from "./pump-drawer";
 import { CareDrawer, type CareType } from "./care-drawer";
-import type { LogApi } from "@/lib/types";
+import { MeasurementDrawer } from "./measurement-drawer";
+import type { BabyMeasurement, LogApi, MeasurementKind } from "@/lib/types";
 
-type DrawerKind = "feed" | "diaper" | "pump" | "care" | null;
+type DrawerKind = "feed" | "diaper" | "pump" | "care" | "weight" | "height" | null;
 
 type LogEntryContextValue = {
   openFeed: (log?: LogApi) => void;
@@ -17,6 +18,8 @@ type LogEntryContextValue = {
   openBath: (log?: LogApi) => void;
   openHaircut: (log?: LogApi) => void;
   openNail: (log?: LogApi) => void;
+  openWeight: (m?: BabyMeasurement) => void;
+  openHeight: (m?: BabyMeasurement) => void;
 };
 
 const LogEntryContext = createContext<LogEntryContextValue | null>(null);
@@ -34,13 +37,17 @@ export function useLogEntry() {
 const Drawers = memo(function Drawers({
   kind,
   careType,
+  measureKind,
   editing,
+  measureEditing,
   babyId,
   onClose,
 }: {
   kind: DrawerKind;
   careType: CareType;
+  measureKind: MeasurementKind;
   editing: LogApi | null;
+  measureEditing: BabyMeasurement | null;
   babyId: number | null;
   onClose: () => void;
 }) {
@@ -59,6 +66,13 @@ const Drawers = memo(function Drawers({
         editing={editing}
         onOpenChange={handleChange}
       />
+      <MeasurementDrawer
+        babyId={babyId}
+        open={kind === "weight" || kind === "height"}
+        kind={measureKind}
+        editing={measureEditing}
+        onOpenChange={handleChange}
+      />
     </>
   );
 });
@@ -68,7 +82,9 @@ export function LogEntryProvider({ children }: { children: React.ReactNode }) {
   const babyId = baby?.id ?? null;
   const [kind, setKind] = useState<DrawerKind>(null);
   const [careType, setCareType] = useState<CareType>("bath");
+  const [measureKind, setMeasureKind] = useState<MeasurementKind>("weight");
   const [editing, setEditing] = useState<LogApi | null>(null);
+  const [measureEditing, setMeasureEditing] = useState<BabyMeasurement | null>(null);
 
   const handleClose = useCallback(() => setKind(null), []);
 
@@ -76,6 +92,12 @@ export function LogEntryProvider({ children }: { children: React.ReactNode }) {
     setEditing(log ?? null);
     if (ct) setCareType(ct);
     setKind(k);
+  }
+
+  function openMeasurement(mk: MeasurementKind, m?: BabyMeasurement) {
+    setMeasureEditing(m ?? null);
+    setMeasureKind(mk);
+    setKind(mk);
   }
 
   const value = useMemo<LogEntryContextValue>(
@@ -86,6 +108,8 @@ export function LogEntryProvider({ children }: { children: React.ReactNode }) {
       openBath: (log) => open("care", log, "bath"),
       openHaircut: (log) => open("care", log, "haircut"),
       openNail: (log) => open("care", log, "nail"),
+      openWeight: (m) => openMeasurement("weight", m),
+      openHeight: (m) => openMeasurement("height", m),
     }),
     []
   );
@@ -93,7 +117,15 @@ export function LogEntryProvider({ children }: { children: React.ReactNode }) {
   return (
     <LogEntryContext.Provider value={value}>
       {children}
-      <Drawers kind={kind} careType={careType} editing={editing} babyId={babyId} onClose={handleClose} />
+      <Drawers
+        kind={kind}
+        careType={careType}
+        measureKind={measureKind}
+        editing={editing}
+        measureEditing={measureEditing}
+        babyId={babyId}
+        onClose={handleClose}
+      />
     </LogEntryContext.Provider>
   );
 }

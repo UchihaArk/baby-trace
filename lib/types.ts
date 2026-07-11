@@ -12,7 +12,7 @@ export type Baby = Omit<BabyRow, "accessCodeHash"> & {
 };
 export type { LogApi } from "@/server/lib";
 export type { TodayStats, Summary, CareInterval, CareSummary, BucketAgg, TrendResponse } from "@/server/routes/stats";
-export type { ActivityType } from "@/server/schema";
+export type { ActivityType, MeasurementKind, BabyMeasurement } from "@/server/schema";
 export type {
   LogDetails,
   FeedDetails,
@@ -23,4 +23,6 @@ export type {
   UpdateLogInput,
   CreateBabyInput,
   UpdateBabyInput,
+  CreateMeasurementInput,
+  UpdateMeasurementInput,
 } from "@/server/inputs";
