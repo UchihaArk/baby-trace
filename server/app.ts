@@ -6,12 +6,14 @@ import { logsRoutes } from "./routes/logs";
 import { measurementsRoutes } from "./routes/measurements";
 import { statsRoutes } from "./routes/stats";
 import { sleepRoutes } from "./routes/sleep";
+import { vaccinesRoutes } from "./routes/vaccines";
 
 const app = new Hono<AppEnv>()
   .use("*", logger())
   .route("/babies", babiesRoutes)
   .route("/logs", logsRoutes)
   .route("/measurements", measurementsRoutes)
+  .route("/vaccines", vaccinesRoutes)
   .route("/stats", statsRoutes)
   .route("/sleep", sleepRoutes);
 

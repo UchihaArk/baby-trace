@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useReducer } from "react";
 import useSWR from "swr";
-import useSWRInfinite from "swr/infinite";
 import { api } from "./api-client";
 import { nowSec, startOfLocalDaySec } from "./time";
 import type {
   Baby,
   BabyMeasurement,
+  BabyVaccine,
   CareSummary,
   LogApi,
   MeasurementKind,
@@ -17,7 +17,6 @@ import type {
 } from "./types";
 
 export const RECENT_LIMIT = 5;
-export const HISTORY_PAGE_SIZE = 30;
 export const DASHBOARD_REFRESH_MS = 5000;
 
 export const BABIES_KEY = "babies:list";
@@ -69,35 +68,22 @@ export function useRecentLogs(babyId: number | null, limit = RECENT_LIMIT) {
 }
 
 /**
- * 历史记录无限滚动（游标分页）。
- * key 编码为 `logs:{babyId}:page:{beforeTs}:{beforeId}`，fetcher 解析后请求 /api/logs。
+ * 单日记录：返回某自然日 [dayStart, dayStart+1天) 的全部记录（按时间倒序）。
+ * 历史页用——默认今天，可切换到任意历史日期。
  */
-export function useBabyLogsInfinite(babyId: number | null) {
-  return useSWRInfinite<LogApi[]>(
-    (_index, prev) => {
-      if (babyId == null) return null;
-      if (prev && prev.length === 0) return null; // 已到尽头
-      const last = prev?.[prev.length - 1];
-      const ts = last ? String(last.startTime) : "";
-      const id = last ? String(last.id) : "";
-      return `logs:${babyId}:page:${ts}:${id}`;
-    },
-    async (key: string) => {
-      const parts = key.split(":"); // [logs, babyId, "page", ts, id]
-      const query: { babyId: string; limit: string; beforeTs?: string; beforeId?: string } = {
-        babyId: parts[1],
-        limit: String(HISTORY_PAGE_SIZE),
-      };
-      if (parts[3] && parts[4]) {
-        query.beforeTs = parts[3];
-        query.beforeId = parts[4];
-      }
-      const res = await api.logs.$get({ query });
-      if (!res.ok) throw new Error("加载历史失败");
+export const LOGS_BY_DAY_KEY = (babyId: number, dayStart: number) =>
+  `logs:${babyId}:day:${dayStart}`;
+
+export function useLogsByDay(babyId: number | null, dayStart: number) {
+  return useSWR<LogApi[]>(
+    babyId != null ? LOGS_BY_DAY_KEY(babyId, dayStart) : null,
+    async () => {
+      const res = await api.logs.$get({
+        query: { babyId: String(babyId), day: String(dayStart) },
+      });
+      if (!res.ok) throw new Error("加载记录失败");
       return res.json();
-    },
-    // 进入历史页时重新拉取第一页，确保看到最新记录（而非上次的缓存）
-    { revalidateFirstPage: true }
+    }
   );
 }
 
@@ -153,6 +139,17 @@ export function useMeasurements(babyId: number | null, kind: MeasurementKind) {
       return res.json();
     }
   );
+}
+
+/** 疫苗接种：某宝宝的全部接种记录，按接种时间升序 */
+export const VACCINES_KEY = (babyId: number) => `vaccines:${babyId}`;
+
+export function useVaccines(babyId: number | null) {
+  return useSWR<BabyVaccine[]>(babyId != null ? VACCINES_KEY(babyId) : null, async () => {
+    const res = await api.vaccines.$get({ query: { babyId: String(babyId) } });
+    if (!res.ok) throw new Error("加载疫苗失败");
+    return res.json();
+  });
 }
 
 export function useElapsed(startTsSec: number | null): number | null {

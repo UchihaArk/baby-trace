@@ -28,7 +28,7 @@ export const nailDetailsSchema = z.object({
 });
 export type NailDetails = z.infer<typeof nailDetailsSchema>;
 
-export const detailsSchema = z.union([
+const detailsSchema = z.union([
   feedDetailsSchema,
   diaperDetailsSchema,
   pumpDetailsSchema,
@@ -73,6 +73,21 @@ export type CreateMeasurementInput = z.infer<typeof createMeasurementSchema>;
 
 export const updateMeasurementSchema = createMeasurementSchema.partial();
 export type UpdateMeasurementInput = z.infer<typeof updateMeasurementSchema>;
+
+// ── 疫苗接种记录 ────────────────────────────────────────────────────────
+
+/** 创建一条疫苗接种记录的入参。dose 剂次可选（如「第 1 针」）。 */
+export const createVaccineSchema = z.object({
+  babyId: z.number().int().positive(),
+  name: z.string().trim().min(1).max(40),
+  dose: z.string().trim().max(20).nullable().optional(),
+  vaccinatedAt: z.number().int().nonnegative(),
+  notes: z.string().max(500).nullable().optional(),
+});
+export type CreateVaccineInput = z.infer<typeof createVaccineSchema>;
+
+export const updateVaccineSchema = createVaccineSchema.partial();
+export type UpdateVaccineInput = z.infer<typeof updateVaccineSchema>;
 
 /** 宝宝档案 */
 export const babyColorKeys = [

@@ -6,6 +6,7 @@ import { TodayBanner } from "@/components/dashboard/today-banner";
 import { TodaySummary } from "@/components/dashboard/today-summary";
 import { ActionDock } from "@/components/dashboard/action-dock";
 import { BodySummary } from "@/components/dashboard/body-summary";
+import { VaccineSummary } from "@/components/dashboard/vaccine-summary";
 import { useBaby } from "@/components/baby/baby-provider";
 import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
 import { cn } from "@/lib/utils";
@@ -15,13 +16,14 @@ export default function DashboardPage() {
   const { mutate } = useSWRConfig();
   const { pull, refreshing, pulling } = usePullToRefresh(async () => {
     if (!baby) return;
-    // 重验本宝宝的「今日统计」「最近动态」与「身体测量」
+    // 重验本宝宝的「今日统计」「最近动态」「身体测量」与「疫苗」
     await mutate(
       (k) =>
         typeof k === "string" &&
         (k.startsWith(`stats:${baby.id}:`) ||
           k.startsWith(`logs:${baby.id}:`) ||
-          k.startsWith(`measurements:${baby.id}:`))
+          k.startsWith(`measurements:${baby.id}:`) ||
+          k.startsWith(`vaccines:${baby.id}`))
     );
   });
 
@@ -46,6 +48,7 @@ export default function DashboardPage() {
         <TodaySummary babyId={baby.id} />
         <ActionDock babyId={baby.id} />
         <BodySummary babyId={baby.id} />
+        <VaccineSummary babyId={baby.id} />
       </div>
     </>
   );

@@ -4,19 +4,22 @@ import { mutate } from "swr";
 import { toast } from "sonner";
 import { api } from "./api-client";
 import { notifyLogsMutated } from "./log-events";
-import { BABIES_KEY, BABY_KEY, MEASUREMENTS_KEY, RECENT_KEY, RECENT_LIMIT } from "./hooks";
+import { BABIES_KEY, BABY_KEY, MEASUREMENTS_KEY, RECENT_KEY, RECENT_LIMIT, VACCINES_KEY } from "./hooks";
 import { nowSec } from "./time";
 import type {
   Baby,
   BabyMeasurement,
+  BabyVaccine,
   CreateBabyInput,
   CreateLogInput,
   CreateMeasurementInput,
+  CreateVaccineInput,
   LogApi,
   MeasurementKind,
   UpdateBabyInput,
   UpdateLogInput,
   UpdateMeasurementInput,
+  UpdateVaccineInput,
 } from "./types";
 
 const revalidateLogs = (babyId: number) => {
@@ -268,6 +271,97 @@ export async function deleteMeasurement(id: number, babyId: number, kind: Measur
   } catch (e) {
     toast.error(e instanceof Error ? e.message : "删除失败");
     await revalidateMeasurements(babyId);
+    return false;
+  }
+}
+
+// ── 疫苗接种记录 ──────────────────────────────────────────────────────
+
+/** 失效某宝宝的疫苗缓存 */
+const revalidateVaccines = (babyId: number) => mutate(VACCINES_KEY(babyId));
+
+/** 新增接种记录（乐观）：插入到升序列表（按 vaccinatedAt 正确归位） */
+export async function createVaccine(babyId: number, input: CreateVaccineInput): Promise<BabyVaccine | null> {
+  const temp: BabyVaccine = {
+    id: tmpId(),
+    babyId,
+    name: input.name,
+    dose: input.dose ?? null,
+    vaccinatedAt: input.vaccinatedAt,
+    notes: input.notes ?? null,
+    createdAt: nowSec(),
+  };
+  const key = VACCINES_KEY(babyId);
+  await mutate(
+    key,
+    (list?: BabyVaccine[]) => {
+      const next = [...(list ?? []), temp].sort((a, b) => a.vaccinatedAt - b.vaccinatedAt);
+      return next;
+    },
+    { revalidate: false }
+  );
+
+  try {
+    const res = await api.vaccines.$post({ json: input });
+    if (!res.ok) throw new Error(await errorMessage(res));
+    const created: BabyVaccine = await res.json();
+    toast.success("已记录 ✓");
+    await revalidateVaccines(babyId);
+    return created;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "保存失败");
+    await revalidateVaccines(babyId);
+    return null;
+  }
+}
+
+/** 编辑接种记录（乐观） */
+export async function updateVaccine(
+  id: number,
+  babyId: number,
+  patch: UpdateVaccineInput
+): Promise<boolean> {
+  const key = VACCINES_KEY(babyId);
+  await mutate(
+    key,
+    (list?: BabyVaccine[]) => {
+      if (!list) return list;
+      const next = list.map((v) => (v.id === id ? { ...v, ...patch } : v));
+      next.sort((a, b) => a.vaccinatedAt - b.vaccinatedAt);
+      return next;
+    },
+    { revalidate: false }
+  );
+
+  try {
+    const res = await api.vaccines[":id"].$patch({ param: { id: String(id) }, json: patch });
+    if (!res.ok) throw new Error(await errorMessage(res));
+    toast.success("已更新 ✓");
+    await revalidateVaccines(babyId);
+    return true;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "更新失败");
+    await revalidateVaccines(babyId);
+    return false;
+  }
+}
+
+/** 删除接种记录（乐观） */
+export async function deleteVaccine(id: number, babyId: number): Promise<boolean> {
+  const key = VACCINES_KEY(babyId);
+  await mutate(key, (list?: BabyVaccine[]) => list?.filter((v) => v.id !== id), {
+    revalidate: false,
+  });
+
+  try {
+    const res = await api.vaccines[":id"].$delete({ param: { id: String(id) } });
+    if (!res.ok) throw new Error(await errorMessage(res));
+    toast.success("已删除");
+    await revalidateVaccines(babyId);
+    return true;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "删除失败");
+    await revalidateVaccines(babyId);
     return false;
   }
 }

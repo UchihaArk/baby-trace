@@ -67,9 +67,28 @@ export const babyMeasurements = sqliteTable("baby_measurements", {
   createdAt: integer("created_at", { mode: "number" }).notNull(),
 });
 
+/**
+ * baby_vaccines —— 疫苗接种记录（独立于活动日志，纯接种清单）
+ * - name：疫苗名称（自由文本，如「乙肝疫苗」）。
+ * - dose：剂次（自由文本，如「第 1 针」「加强针」），可空。
+ * - vaccinated_at：接种时间（Unix 秒）。
+ * 同一疫苗多针 = 多条记录，按 vaccinated_at 正序即接种历史。
+ */
+export const babyVaccines = sqliteTable("baby_vaccines", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  babyId: integer("baby_id", { mode: "number" }).notNull().references(() => babies.id),
+  name: text("name").notNull(),
+  dose: text("dose"),
+  vaccinatedAt: integer("vaccinated_at", { mode: "number" }).notNull(),
+  notes: text("notes"),
+  createdAt: integer("created_at", { mode: "number" }).notNull(),
+});
+
 export type Baby = typeof babies.$inferSelect;
 export type NewBaby = typeof babies.$inferInsert;
 export type BabyLog = typeof babyLogs.$inferSelect;
 export type NewBabyLog = typeof babyLogs.$inferInsert;
 export type BabyMeasurement = typeof babyMeasurements.$inferSelect;
 export type NewBabyMeasurement = typeof babyMeasurements.$inferInsert;
+export type BabyVaccine = typeof babyVaccines.$inferSelect;
+export type NewBabyVaccine = typeof babyVaccines.$inferInsert;

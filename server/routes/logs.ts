@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
-import { and, desc, eq, lt, or } from "drizzle-orm";
+import { and, desc, eq, gte, lt, or } from "drizzle-orm";
 import type { AppEnv } from "../env";
 import { createDb, schema } from "../db";
 import { createLogSchema, updateLogSchema } from "../inputs";
@@ -12,17 +12,41 @@ const listQuerySchema = z.object({
   limit: z.string().optional(),
   beforeTs: z.string().optional(), // 游标：加载更早的记录
   beforeId: z.string().optional(),
+  day: z.string().optional(), // 某日 0 点 unix 秒：返回 [day, day+1天) 全部记录
 });
 
 export const logsRoutes = new Hono<AppEnv>()
   /**
    * GET /logs?babyId=&limit=&beforeTs=&beforeId=
-   * 不带游标 → 最近 N 条；带游标 → 早于 (beforeTs, beforeId) 的 N 条（用于无限滚动）。
+   * GET /logs?babyId=&day=<unix秒>
+   * - 带 day：返回该自然日 [day, day+86400) 全部记录（按时间倒序，不分页）。
+   * - 不带 day：游标分页，最近 N 条 / 早于 (beforeTs, beforeId) 的 N 条。
    */
   .get("/", zValidator("query", listQuerySchema), async (c) => {
     const q = c.req.valid("query");
     const db = createDb(c.env.DB);
     const babyId = Number(q.babyId);
+
+    // 单日查询：历史页用，返回该日全部记录
+    if (q.day != null) {
+      const day = Number(q.day);
+      if (Number.isFinite(day) && day > 0) {
+        const rows = await db
+          .select()
+          .from(schema.babyLogs)
+          .where(
+            and(
+              eq(schema.babyLogs.babyId, babyId),
+              gte(schema.babyLogs.startTime, day),
+              lt(schema.babyLogs.startTime, day + 86400)
+            )
+          )
+          .orderBy(desc(schema.babyLogs.startTime), desc(schema.babyLogs.id))
+          .all();
+        return c.json(rows.map(toLog));
+      }
+    }
+
     const limit = Math.min(Math.max(Number(q.limit ?? "30"), 1), 100);
     const beforeTs = q.beforeTs != null ? Number(q.beforeTs) : null;
     const beforeId = q.beforeId != null ? Number(q.beforeId) : null;

@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, RefreshCw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { useBaby } from "@/components/baby/baby-provider";
 import { TimelineItem } from "@/components/dashboard/timeline-item";
 import { Chip } from "@/components/log-entry/chip";
-import { HISTORY_PAGE_SIZE, useBabyLogsInfinite } from "@/lib/hooks";
+import { useLogsByDay } from "@/lib/hooks";
 import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
-import { subscribeLogsMutated } from "@/lib/log-events";
-import { dateLabel, formatDate, startOfLocalDaySec } from "@/lib/time";
+import { formatDate, startOfLocalDaySec } from "@/lib/time";
 import { cn } from "@/lib/utils";
-import type { ActivityType, LogApi } from "@/lib/types";
+import type { ActivityType } from "@/lib/types";
 
-type Group = { key: string; label: string; dayStart: number; logs: LogApi[] };
 type Filter = "all" | ActivityType;
+
+const DAY = 86400;
 
 const FILTERS: { value: Filter; label: string; selectedClass?: string }[] = [
   { value: "all", label: "全部" },
@@ -26,83 +26,38 @@ const FILTERS: { value: Filter; label: string; selectedClass?: string }[] = [
   { value: "nail", label: "✂️ 剪指甲", selectedClass: "border-transparent bg-emerald-500 text-white" },
 ];
 
-function groupByDay(logs: LogApi[]): Group[] {
-  const todayStart = startOfLocalDaySec();
-  const map = new Map<number, LogApi[]>();
-  for (const log of logs) {
-    const dayStart = startOfLocalDaySec(new Date(log.startTime * 1000));
-    const arr = map.get(dayStart) ?? [];
-    arr.push(log);
-    map.set(dayStart, arr);
-  }
-  return [...map.entries()]
-    .sort((a, b) => b[0] - a[0])
-    .map(([dayStart, dayLogs]) => ({
-      key: String(dayStart),
-      dayStart,
-      label: dateLabel(dayStart, todayStart),
-      logs: dayLogs,
-    }));
-}
-
 export default function HistoryPage() {
   const { baby, isLoading: babyLoading } = useBaby();
   const [filter, setFilter] = useState<Filter>("all");
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const initialized = useRef(false);
+  // 当前查看的日期（YYYY-MM-DD 字符串，用于 <input type="date">）
+  const todayStr = formatDate(startOfLocalDaySec());
+  const [dayStr, setDayStr] = useState<string>(todayStr);
 
-  const { data, setSize, isValidating, mutate: mutateLogs } = useBabyLogsInfinite(baby?.id ?? null);
+  // dayStr → 当日 0 点 unix 秒
+  const dayStart = useMemo(() => {
+    const [y, m, d] = dayStr.split("-").map(Number);
+    if (!y || !m || !d) return startOfLocalDaySec();
+    return startOfLocalDaySec(new Date(y, m - 1, d));
+  }, [dayStr]);
+
+  const { data, isLoading, mutate: mutateDay } = useLogsByDay(baby?.id ?? null, dayStart);
   const { pull, refreshing, pulling } = usePullToRefresh(async () => {
-    await mutateLogs();
+    if (!baby) return;
+    await mutateDay();
   });
-  const pages = data ?? [];
-  const allLogs = pages.flat();
-  const lastPage = pages[pages.length - 1];
-  const reachedEnd = pages.length > 0 && (!lastPage || lastPage.length < HISTORY_PAGE_SIZE);
-  const initialLoading = pages.length === 0 && isValidating;
 
-  const groups = useMemo(() => groupByDay(allLogs), [allLogs]);
-  const filteredGroups = useMemo(() => {
-    if (filter === "all") return groups;
-    return groups
-      .map((g) => ({ ...g, logs: g.logs.filter((l) => l.activityType === filter) }))
-      .filter((g) => g.logs.length > 0);
-  }, [groups, filter]);
+  const logs = useMemo(() => data ?? [], [data]);
+  const filtered = useMemo(
+    () => (filter === "all" ? logs : logs.filter((l) => l.activityType === filter)),
+    [logs, filter]
+  );
 
-  // 首次加载后默认展开“今天”
-  useEffect(() => {
-    if (initialized.current || groups.length === 0) return;
-    initialized.current = true;
-    const todayKey = String(startOfLocalDaySec());
-    const hasToday = groups.some((g) => g.key === todayKey);
-    setExpanded(new Set([hasToday ? todayKey : groups[0].key]));
-  }, [groups]);
+  // 是否为今天（禁用「下一天」按钮）
+  const isToday = dayStr === todayStr;
 
-  // 日志增删改后，用 bound mutate 刷新无限滚动列表（useSWRInfinite 不响应全局 mutate）
-  useEffect(() => subscribeLogsMutated(() => { void mutateLogs(); }), [mutateLogs]);
-
-  // 无限滚动：底部哨兵进入视口时加载下一页
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || reachedEnd || isValidating || babyLoading) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) setSize((s) => s + 1);
-      },
-      { rootMargin: "240px" }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [reachedEnd, isValidating, setSize, babyLoading]);
-
-  function toggle(key: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+  function shiftDay(delta: number) {
+    const next = dayStart + delta * DAY;
+    setDayStr(formatDate(next));
   }
 
   if (babyLoading || !baby) {
@@ -121,7 +76,40 @@ export default function HistoryPage() {
       >
         <RefreshCw className={cn("size-5 transition-transform", refreshing && "animate-spin")} />
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-3">
+
+      {/* 日期选择器：左右箭头 + date input */}
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-2">
+        <button
+          type="button"
+          onClick={() => shiftDay(-1)}
+          className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted active:scale-95"
+          aria-label="前一天"
+        >
+          <ChevronLeft className="size-5" />
+        </button>
+        <input
+          type="date"
+          value={dayStr}
+          max={todayStr}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v) setDayStr(v > todayStr ? todayStr : v);
+          }}
+          className="flex-1 rounded-xl bg-muted/60 px-3 py-2 text-center text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        />
+        <button
+          type="button"
+          onClick={() => shiftDay(1)}
+          disabled={isToday}
+          className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted active:scale-95 disabled:opacity-30"
+          aria-label="后一天"
+        >
+          <ChevronRight className="size-5" />
+        </button>
+      </div>
+
+      {/* 类型筛选 */}
+      <div className="flex gap-2 overflow-x-auto py-3">
         {FILTERS.map((f) => (
           <Chip
             key={f.value}
@@ -135,53 +123,19 @@ export default function HistoryPage() {
         ))}
       </div>
 
-      {initialLoading ? (
+      {/* 当日记录 */}
+      {isLoading ? (
         <p className="py-10 text-center text-sm text-muted-foreground">加载中…</p>
-      ) : groups.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border px-4 py-16 text-center text-sm text-muted-foreground">
-          还没有记录
-        </div>
-      ) : filteredGroups.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border px-4 py-16 text-center text-sm text-muted-foreground">
-          {reachedEnd ? "该类型暂无记录" : "加载中…"}
+          {logs.length === 0 ? "这天没有记录" : "该类型暂无记录"}
         </div>
       ) : (
-        filteredGroups.map((g) => {
-          const isOpen = expanded.has(g.key);
-          return (
-            <section key={g.key} className="mb-1">
-              <button
-                type="button"
-                onClick={() => toggle(g.key)}
-                className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 flex w-full items-center justify-between gap-2 border-b border-border bg-background px-4 py-2 text-left"
-              >
-                <span className="flex items-baseline gap-2">
-                  <span className="text-sm font-semibold">{g.label}</span>
-                  <span className="text-xs text-muted-foreground">{formatDate(g.dayStart)}</span>
-                </span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  {g.logs.length} 条
-                  <ChevronDown className={cn("size-4 transition-transform", isOpen && "rotate-180")} />
-                </span>
-              </button>
-              {isOpen && (
-                <div className="divide-y divide-border">
-                  {g.logs.map((log) => (
-                    <TimelineItem key={log.id} log={log} babyId={baby.id} showType />
-                  ))}
-                </div>
-              )}
-            </section>
-          );
-        })
-      )}
-
-      <div ref={sentinelRef} className="h-1" />
-      {!reachedEnd && isValidating && pages.length > 0 && (
-        <div className="py-6 text-center text-xs text-muted-foreground">加载更早的记录…</div>
-      )}
-      {reachedEnd && allLogs.length > 0 && (
-        <div className="py-6 text-center text-xs text-muted-foreground">没有更早的记录了</div>
+        <div className="divide-y divide-border">
+          {filtered.map((log) => (
+            <TimelineItem key={log.id} log={log} babyId={baby.id} showType />
+          ))}
+        </div>
       )}
     </main>
   );
