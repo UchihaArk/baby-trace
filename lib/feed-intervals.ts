@@ -37,14 +37,15 @@ export type GapState = {
   textClass: string;
 };
 
-/** 缓冲窗口：超过建议间隔多少秒后进入 focus（关注） */
-const FOCUS_BUFFER = 30 * 60; // 30 分钟
-/** 进入 suggest（建议操作）的额外阈值：超过建议间隔 + 1 小时 */
-const SUGGEST_BUFFER = 60 * 60;
+/** 围绕建议间隔的 ±30 分钟窗口 */
+const WINDOW = 30 * 60;
 
-/** 根据距上次操作的秒数 + 建议间隔，返回间隔状态 */
+/** 根据距上次操作的秒数 + 建议间隔，返回间隔状态：
+ * - < 建议间隔 - 30min：正常
+ * - 建议间隔 - 30min ~ 建议间隔 + 30min：该关注了（临近建议时间）
+ * - ≥ 建议间隔 + 30min：建议操作（喂养/吸奶） */
 export function gapState(gapSec: number, intervalSec: number, action: string): GapState {
-  if (gapSec >= intervalSec + SUGGEST_BUFFER) {
+  if (gapSec >= intervalSec + WINDOW) {
     return {
       level: "suggest",
       label: `建议${action}`,
@@ -52,7 +53,7 @@ export function gapState(gapSec: number, intervalSec: number, action: string): G
       textClass: "text-rose-600 dark:text-rose-400",
     };
   }
-  if (gapSec >= intervalSec + FOCUS_BUFFER) {
+  if (gapSec >= intervalSec - WINDOW) {
     return {
       level: "focus",
       label: "该关注了",
