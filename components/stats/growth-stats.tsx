@@ -8,7 +8,7 @@ import { GrowthChart, type GrowthPoint } from "@/components/stats/growth-chart";
 import { ACCENT_SELECTED, type Accent } from "@/components/stats/metrics";
 import { useMeasurements } from "@/lib/hooks";
 import { formatHeight, formatWeight } from "@/lib/measure";
-import { PERIOD_OPTIONS, TREND_WINDOW, trendBuckets, type Period } from "@/lib/periods";
+import { PERIOD_OPTIONS, type Period } from "@/lib/periods";
 import { formatChineseDate } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { MeasurementKind } from "@/lib/types";
@@ -19,7 +19,6 @@ type KindMeta = {
   emoji: string;
   accent: Accent;
   format: (v: number) => string;
-  /** 成长 Tab 只看 月/季/年 */
 };
 
 const KINDS: KindMeta[] = [
@@ -30,21 +29,63 @@ const KINDS: KindMeta[] = [
 /** 成长 Tab 可用粒度：去掉日/周（测量值稀疏，日/周无意义） */
 const GROWTH_PERIODS = PERIOD_OPTIONS.filter((p) => p.value !== "day" && p.value !== "week");
 
-const GROWTH_LABEL: Record<Period, string> = {
-  day: "",
-  week: "",
-  month: "最近 6 月",
-  quarter: "最近 4 季度",
-  year: "最近 3 年",
+const DAY = 86400;
+
+type GrowthRange = {
+  /** x 轴文案 */
+  caption: string;
+  /** 各分桶：[from, to) 区间 + 短标签 + 是否当前（进行中） */
+  buckets: { from: number; to: number; label: string; isCurrent: boolean }[];
 };
 
-/** x 轴短标签（与统计页 shortLabel 一致，独立于此处以避免跨模块耦合） */
-function shortLabel(from: number, period: Period): string {
-  const d = new Date(from * 1000);
-  const m = d.getMonth() + 1;
-  if (period === "month") return `${m}月`;
-  if (period === "quarter") return `Q${Math.floor((m - 1) / 3) + 1}`;
-  return `${d.getFullYear()}`;
+/** 各粒度的天数跨度 */
+const GROWTH_DAYS: Record<Period, number> = {
+  day: 0,
+  week: 0,
+  month: 30,
+  quarter: 120,
+  year: 365,
+};
+
+/**
+ * 成长视图的时间轴分桶——统一按「日」分桶，区别只在跨度：
+ * - month：近 30 天
+ * - quarter：近 120 天
+ * - year：近 365 天
+ * 以「今天」为右端点向左截取，每个桶 = 一个自然日，取该日最后一条测量值。
+ */
+function growthRange(period: Period): GrowthRange {
+  const days = GROWTH_DAYS[period];
+  const now = new Date();
+  const buckets: GrowthRange["buckets"] = [];
+  // 从 days 天前到今天（含），共 days+1 个点
+  for (let i = days; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const from = Math.floor(d.getTime() / 1000);
+    buckets.push({
+      from,
+      to: from + DAY,
+      label: `${d.getMonth() + 1}/${d.getDate()}`,
+      isCurrent: i === 0,
+    });
+  }
+  const captionMap: Record<Period, string> = {
+    day: "",
+    week: "",
+    month: "近 1 个月",
+    quarter: "近 4 个月",
+    year: "近 1 年",
+  };
+  return { caption: captionMap[period], buckets };
+}
+
+/** x 轴标签是否需要稀疏显示（点多时跳着标，避免挤） */
+function shouldShowLabel(i: number, total: number): boolean {
+  if (total <= 7) return true;
+  if (total <= 13) return i % 2 === 0 || i === total - 1;
+  // >13 个点（如年视图 365 天）：按约 7 等分标一次 + 末点
+  const step = Math.ceil(total / 7);
+  return i % step === 0 || i === total - 1;
 }
 
 export function GrowthStats({ babyId }: { babyId: number }) {
@@ -56,27 +97,28 @@ export function GrowthStats({ babyId }: { babyId: number }) {
   const { openWeight, openHeight } = useLogEntry();
   const openMeasure = kind === "weight" ? openWeight : openHeight;
 
-  const buckets = useMemo(() => trendBuckets(period), [period]);
+  const { caption, buckets } = useMemo(() => growthRange(period), [period]);
   const n = buckets.length;
   const [selectedIndex, setSelectedIndex] = useState(n - 1);
 
-  // 把测量值落到所属周期桶（按 measuredAt）。取该周期「最后一条」作为代表值（快照语义）。
+  // 把测量值落到所属分桶（按 measuredAt）。取该桶「最后一条」作为代表值（快照语义）。
   const points: GrowthPoint[] = useMemo(() => {
     const sorted = measurements ? [...measurements].sort((a, b) => a.measuredAt - b.measuredAt) : [];
-    return buckets.map((b) => {
-      // 该周期 [from, to) 内最后一条测量
+    return buckets.map((b, i) => {
       let last: number | null = null;
       for (const m of sorted) {
         if (m.measuredAt >= b.from && m.measuredAt < b.to) last = m.valueGrams;
       }
-      return { label: shortLabel(b.from, period), value: last, isCurrent: b.isCurrent };
+      // 点多时跳着显示 x 轴标签，避免挤压
+      const label = shouldShowLabel(i, n) ? b.label : "";
+      return { label, value: last, isCurrent: b.isCurrent };
     });
-  }, [buckets, measurements, period]);
+  }, [buckets, measurements, n]);
 
   const sel = Math.min(selectedIndex, n - 1);
   const selBucket = buckets[sel];
 
-  // 选中周期的明细：该周期内所有测量（首/末 + 变化量）
+  // 选中分桶的明细：该区间内所有测量
   const inRange = useMemo(() => {
     if (!measurements) return [];
     return measurements
@@ -97,7 +139,7 @@ export function GrowthStats({ babyId }: { babyId: number }) {
 
   function changePeriod(p: Period) {
     setPeriod(p);
-    setSelectedIndex(TREND_WINDOW[p] - 1);
+    setSelectedIndex(growthRange(p).buckets.length - 1);
   }
 
   return (
@@ -139,7 +181,7 @@ export function GrowthStats({ babyId }: { babyId: number }) {
           <h3 className="text-sm font-semibold">
             {meta.emoji} {meta.label}趋势
           </h3>
-          <span className="text-xs text-muted-foreground">{GROWTH_LABEL[period]}</span>
+          <span className="text-xs text-muted-foreground">{caption}</span>
         </div>
         <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
           {points.some((p) => p.value != null) ? (
