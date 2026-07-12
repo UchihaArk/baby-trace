@@ -1,12 +1,13 @@
 /**
- * 喂奶 / 吸奶的月龄分段建议间隔。
+ * 喂奶 / 吸奶 / 换尿布的月龄分段建议间隔。
  * 根据宝宝出生日期计算「完整月龄」，返回该阶段的建议间隔（秒）。
  *
- * 阈值依据（泌乳与喂养常识，仅作提示参考，非医学处方）：
+ * 阈值依据（育儿常识，仅作提示参考，非医学处方）：
  * - 喂奶：0–6 月 3h、≥6 月 4h（添加辅食后频次降低）。
  * - 吸奶：0–6 周（≈1.5 月）3h（建立泌乳、防涨奶）、1.5–6 月 4h（供需平衡期）、≥6 月 6h。
+ * - 尿布：5h 一次，避免久捂。
  */
-export type FeedKind = "feed" | "pump";
+export type FeedKind = "feed" | "pump" | "diaper";
 
 /** 从出生到指定时刻的完整月数（本月还没到出生日则少算一个月） */
 export function completedMonths(birth: Date, now = new Date()): number {
@@ -14,16 +15,19 @@ export function completedMonths(birth: Date, now = new Date()): number {
   return now.getDate() < birth.getDate() ? n - 1 : n;
 }
 
-/** 按月龄返回某类喂养的建议间隔（秒）。 */
+/** 按月龄返回某类的建议间隔（秒）。 */
 export function suggestIntervalSec(kind: FeedKind, months: number): number {
   const HOUR = 3600;
   if (kind === "feed") {
     return months >= 6 ? 4 * HOUR : 3 * HOUR;
   }
-  // pump
-  if (months < 2) return 3 * HOUR; // 0–约 6 周：建立泌乳期
-  if (months < 6) return 4 * HOUR; // 1.5–6 月：供需平衡期
-  return 6 * HOUR; // ≥ 6 月：辅食期，频次明显降低
+  if (kind === "pump") {
+    if (months < 2) return 3 * HOUR; // 0–约 6 周：建立泌乳期
+    if (months < 6) return 4 * HOUR; // 1.5–6 月：供需平衡期
+    return 6 * HOUR; // ≥ 6 月：辅食期，频次明显降低
+  }
+  // diaper
+  return 5 * HOUR;
 }
 
 export type GapLevel = "ok" | "focus" | "suggest";

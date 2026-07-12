@@ -80,19 +80,23 @@ export function TodaySummary({ babyId }: { babyId: number }) {
   const lastFeed = data?.lastFeed;
   const pumpMl = data?.pumpMl ?? 0;
   const lastPump = data?.lastPump;
+  const lastDiaper = data?.lastDiaper;
 
-  // 月龄 → 喂奶/吸奶的建议间隔（按宝宝实际年龄分段）
+  // 月龄 → 喂奶/吸奶/换尿布的建议间隔（按宝宝实际年龄分段）
   const months = baby ? completedMonths(new Date(baby.birthDate)) : 0;
   const feedInterval = suggestIntervalSec("feed", months);
   const pumpInterval = suggestIntervalSec("pump", months);
+  const diaperInterval = suggestIntervalSec("diaper", months);
 
   // 有任一「上次」记录时启动每秒 tick
-  const now = useNowTick(!!lastFeed || !!lastPump);
+  const now = useNowTick(!!lastFeed || !!lastPump || !!lastDiaper);
 
   const feedGap = lastFeed ? Math.max(0, now - lastFeed.startTime) : 0;
   const feedGapSt = lastFeed ? gapState(feedGap, feedInterval, "喂养") : null;
   const pumpGap = lastPump ? Math.max(0, now - lastPump.startTime) : 0;
   const pumpGapSt = lastPump ? gapState(pumpGap, pumpInterval, "吸奶") : null;
+  const diaperGap = lastDiaper ? Math.max(0, now - lastDiaper.startTime) : 0;
+  const diaperGapSt = lastDiaper ? gapState(diaperGap, diaperInterval, "更换") : null;
 
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -142,13 +146,24 @@ export function TodaySummary({ babyId }: { babyId: number }) {
       />
       <StatCard
         label="今日尿布"
+        tone={diaperGapSt?.level ?? "default"}
         value={
           <span className="whitespace-nowrap">
             {diaperCount}
             <span className="ml-1 text-base font-semibold text-muted-foreground">次</span>
           </span>
         }
-        sub={`💩 ${dirtyCount} · 💧 ${wetCount}`}
+        sub={
+          lastDiaper ? (
+            <span className={cn(diaperGapSt?.textClass && "font-medium", diaperGapSt?.textClass)}>
+              {diaperGapSt?.label
+                ? `${diaperGapSt.label} · 距上次 ${gapClock(diaperGap)}`
+                : `💩 ${dirtyCount} · 距上次 ${gapClock(diaperGap)}`}
+            </span>
+          ) : (
+            `💩 ${dirtyCount} · 💧 ${wetCount}`
+          )
+        }
         icon={Baby}
         accentText="text-amber-600 dark:text-amber-400"
         accentBg="bg-amber-500/10"

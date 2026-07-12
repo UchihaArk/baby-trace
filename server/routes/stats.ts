@@ -21,6 +21,7 @@ export type TodayStats = {
   pumpMl: number;
   lastFeed: ReturnType<typeof toLog> | null;
   lastPump: ReturnType<typeof toLog> | null;
+  lastDiaper: ReturnType<typeof toLog> | null;
   openSleep: ReturnType<typeof toLog> | null;
   lastBath: ReturnType<typeof toLog> | null;
   lastHaircut: ReturnType<typeof toLog> | null;
@@ -169,6 +170,14 @@ export const statsRoutes = new Hono<AppEnv>()
       .limit(1)
       .all();
 
+    const [lastDiaper] = await db
+      .select()
+      .from(schema.babyLogs)
+      .where(and(eq(schema.babyLogs.babyId, babyId), eq(schema.babyLogs.activityType, "diaper")))
+      .orderBy(desc(schema.babyLogs.startTime))
+      .limit(1)
+      .all();
+
     const [openSleep] = await db
       .select()
       .from(schema.babyLogs)
@@ -214,6 +223,7 @@ export const statsRoutes = new Hono<AppEnv>()
       pumpMl,
       lastFeed: lastFeed ? toLog(lastFeed) : null,
       lastPump: lastPump ? toLog(lastPump) : null,
+      lastDiaper: lastDiaper ? toLog(lastDiaper) : null,
       openSleep: openSleep ? toLog(openSleep) : null,
       lastBath: lastBath ? toLog(lastBath) : null,
       lastHaircut: lastHaircut ? toLog(lastHaircut) : null,
