@@ -80,10 +80,11 @@ function growthRange(period: Period): GrowthRange {
 }
 
 /** x 轴标签是否需要稀疏显示（点多时跳着标，避免挤） */
-function shouldShowLabel(i: number, total: number): boolean {
+function shouldShowLabel(i: number, total: number, period: Period): boolean {
+  // 月视图：有数据的日期全部展示
+  if (period === "month") return true;
+  // 季/年视图：点过多时跳着标 + 末点，避免拥挤
   if (total <= 7) return true;
-  if (total <= 13) return i % 2 === 0 || i === total - 1;
-  // >13 个点（如年视图 365 天）：按约 7 等分标一次 + 末点
   const step = Math.ceil(total / 7);
   return i % step === 0 || i === total - 1;
 }
@@ -101,19 +102,27 @@ export function GrowthStats({ babyId }: { babyId: number }) {
   const n = buckets.length;
   const [selectedIndex, setSelectedIndex] = useState(n - 1);
 
-  // 把测量值落到所属分桶（按 measuredAt）。取该桶「最后一条」作为代表值（快照语义）。
+  // 把测量值落到所属分桶（按 measuredAt），取该桶「最后一条」作为代表值（快照语义）。
+  // 再过滤掉无数据的日子——股市风格：x 轴只画「有数据」的日期，
+  // 避免稀疏测量导致相邻点之间全是 null、折线断成孤点。
   const points: GrowthPoint[] = useMemo(() => {
     const sorted = measurements ? [...measurements].sort((a, b) => a.measuredAt - b.measuredAt) : [];
-    return buckets.map((b, i) => {
+    const perDay = buckets.map((b, i) => {
       let last: number | null = null;
       for (const m of sorted) {
         if (m.measuredAt >= b.from && m.measuredAt < b.to) last = m.valueGrams;
       }
-      // 点多时跳着显示 x 轴标签，避免挤压
-      const label = shouldShowLabel(i, n) ? b.label : "";
-      return { label, value: last, isCurrent: b.isCurrent };
+      return { label: b.label, value: last, isCurrent: b.isCurrent, index: i };
     });
-  }, [buckets, measurements, n]);
+    const withData = perDay.filter((b) => b.value != null);
+    const total = withData.length;
+    return withData.map((b, i) => ({
+      label: shouldShowLabel(i, total, period) ? b.label : "",
+      value: b.value,
+      isCurrent: b.isCurrent,
+      index: b.index,
+    }));
+  }, [buckets, measurements, period]);
 
   const sel = Math.min(selectedIndex, n - 1);
   const selBucket = buckets[sel];
