@@ -1,6 +1,9 @@
 import type { BucketAgg } from "@/lib/types";
 
 export type Metric = "feed" | "pump" | "diaper" | "sleep";
+
+/** 喂奶方式：亲喂侧重次数/时长/侧别；瓶喂侧重奶量。与顶层 Metric 正交。 */
+export type FeedMethod = "breast" | "bottle";
 /** 指标/图表的主色调 key。体重用 pink、身高用 cyan，与活动色系错开。 */
 export type Accent = "rose" | "teal" | "amber" | "indigo" | "pink" | "cyan";
 
@@ -75,6 +78,55 @@ export function daysRecorded(metric: Metric, agg: BucketAgg): number {
     case "sleep":
       return agg.daysWithData.sleep;
   }
+}
+
+// ── 喂奶方式（FeedMethod）专用辅助 ───────────────────────────────────
+// 亲喂主指标是「次数」（趋势图 Y 轴），瓶喂沿用「奶量 ml」。
+
+/** 喂奶方式对应的趋势图 Y 轴值：亲喂=日均次数，瓶喂=日均 ml；无数据返回 null */
+export function dailyAvgFeed(method: FeedMethod, agg: BucketAgg): number | null {
+  if (method === "breast") {
+    return agg.daysWithData.breast > 0 ? agg.breastCount / agg.daysWithData.breast : null;
+  }
+  return agg.daysWithData.bottle > 0 ? agg.bottleMl / agg.daysWithData.bottle : null;
+}
+
+/** 喂奶方式对应的有数据天数（caption 分母） */
+export function daysRecordedFeed(method: FeedMethod, agg: BucketAgg): number {
+  return method === "breast" ? agg.daysWithData.breast : agg.daysWithData.bottle;
+}
+
+export type FeedMethodMeta = {
+  method: FeedMethod;
+  emoji: string;
+  label: string; // 亲喂 / 瓶喂
+  trendTitle: string; // 趋势图标题：亲喂次数趋势 / 喂奶量趋势
+  unit: string; // 次 / ml
+  /** 趋势值展示串（Y 轴/caption），亲喂保留 1 位小数 */
+  format: (v: number) => string;
+};
+
+const FEED_METHOD_META: Record<FeedMethod, FeedMethodMeta> = {
+  breast: {
+    method: "breast",
+    emoji: "🤱",
+    label: "亲喂",
+    trendTitle: "亲喂次数趋势",
+    unit: "次",
+    format: (v) => v.toFixed(1),
+  },
+  bottle: {
+    method: "bottle",
+    emoji: "🍼",
+    label: "瓶喂",
+    trendTitle: "喂奶量趋势",
+    unit: "ml",
+    format: (v) => formatMl(v),
+  },
+};
+
+export function feedMethodMeta(method: FeedMethod): FeedMethodMeta {
+  return FEED_METHOD_META[method];
 }
 
 /** Tailwind 需字面量类名，禁止字符串拼接 */

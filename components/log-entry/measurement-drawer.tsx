@@ -43,7 +43,9 @@ const KIND_CONFIG: Record<MeasurementKind, KindConfig> = {
     label: "体重",
     emoji: "⚖️",
     unit: "kg",
-    step: 50, // 50g
+    // 100g = 0.1kg，需与 formatKg 的展示精度（toFixed(1)）对齐。
+    // 否则 50g 步进会被四舍五入吞掉，表现为加减按钮失灵。
+    step: 100,
     presets: [3000, 5000, 7000, 9000], // 3.0 / 5.0 / 7.0 / 9.0 kg
     toInput: formatKg,
     fromInput: kgToGrams,

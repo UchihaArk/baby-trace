@@ -37,6 +37,7 @@ export const babiesRoutes = new Hono<AppEnv>()
         name: body.name,
         birthDate: body.birthDate,
         gender: body.gender ?? null,
+        feedingMethod: body.feedingMethod ?? null,
         avatarEmoji: body.avatarEmoji,
         avatarColor: body.avatarColor,
         createdAt: nowSec(),

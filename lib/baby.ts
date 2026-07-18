@@ -54,3 +54,9 @@ export const GENDER_OPTIONS: { value: "male" | "female" | "other"; label: string
   { value: "female", label: "女孩", emoji: "👧" },
   { value: "other", label: "不填写", emoji: "🚻" },
 ];
+
+/** 主要喂养方式：决定统计页「喂奶」指标的默认视图 */
+export const FEEDING_METHOD_OPTIONS: { value: "breast" | "bottle"; label: string; emoji: string }[] = [
+  { value: "breast", label: "亲喂", emoji: "🤱" },
+  { value: "bottle", label: "瓶喂", emoji: "🍼" },
+];

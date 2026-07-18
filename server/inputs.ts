@@ -104,6 +104,7 @@ export const createBabySchema = z.object({
   name: z.string().trim().min(1).max(20),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   gender: z.enum(["male", "female", "other"]).optional(),
+  feedingMethod: z.enum(["breast", "bottle"]).optional(),
   avatarEmoji: z.string().min(1),
   avatarColor: z.enum(babyColorKeys),
 });

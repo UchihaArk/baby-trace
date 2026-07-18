@@ -13,6 +13,14 @@ export const genders = ["male", "female", "other"] as const;
 export type Gender = (typeof genders)[number];
 
 /**
+ * 主要喂养方式：breast 亲喂 / bottle 瓶喂。
+ * 决定统计页「喂奶」指标默认展示的视图（亲喂侧重次数/时长/侧别，瓶喂侧重奶量）。
+ * 复用 FeedDetails.method 的 bottle/breast 词汇，保持一致。
+ */
+export const feedingMethods = ["breast", "bottle"] as const;
+export type FeedingMethod = (typeof feedingMethods)[number];
+
+/**
  * babies —— 宝宝档案
  * - name：乳名，同时作为 URL 标识（唯一）
  * - birth_date：ISO 日期字符串 "YYYY-MM-DD"
@@ -25,6 +33,7 @@ export const babies = sqliteTable("babies", {
   name: text("name").notNull(),
   birthDate: text("birth_date").notNull(),
   gender: text("gender", { enum: genders }),
+  feedingMethod: text("feeding_method", { enum: feedingMethods }),
   avatarEmoji: text("avatar_emoji").notNull(),
   avatarColor: text("avatar_color").notNull(),
   createdAt: integer("created_at", { mode: "number" }).notNull(),

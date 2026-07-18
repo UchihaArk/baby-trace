@@ -12,10 +12,15 @@ import {
   ACCENT_SELECTED,
   METRICS,
   dailyAvg,
+  dailyAvgFeed,
   daysRecorded,
+  daysRecordedFeed,
+  feedMethodMeta,
   metricMeta,
+  type FeedMethod,
   type Metric,
 } from "@/components/stats/metrics";
+import { FEEDING_METHOD_OPTIONS } from "@/lib/baby";
 import { useStatsCare, useStatsTrend } from "@/lib/hooks";
 import { PERIOD_OPTIONS, TREND_WINDOW, trendBuckets, type Period } from "@/lib/periods";
 import { usePullToRefresh } from "@/lib/use-pull-to-refresh";
@@ -49,6 +54,9 @@ export default function StatsPage() {
   const [tab, setTab] = useState<Tab>("record");
   const [period, setPeriod] = useState<Period>("day");
   const [metric, setMetric] = useState<Metric>("feed");
+  // 喂奶方式：用户未手动切换前，跟随设置「主要喂养方式」；手动切换后以用户选择为准。
+  const [feedMethodOverride, setFeedMethodOverride] = useState<FeedMethod | null>(null);
+  const feedMethod: FeedMethod = feedMethodOverride ?? baby?.feedingMethod ?? "breast";
 
   const buckets = useMemo(() => trendBuckets(period), [period]);
   const n = buckets.length;
@@ -76,22 +84,40 @@ export default function StatsPage() {
   }
 
   const meta = metricMeta(metric);
+  // 喂奶指标下使用 FeedMethod 视图（亲喂=次数 / 瓶喂=ml）；其余指标沿用原逻辑
+  const isFeedView = metric === "feed";
+  const fmMeta = feedMethodMeta(feedMethod);
   const sel = Math.min(selectedIndex, n - 1);
   const selBucket = buckets[sel];
   const selAgg = aggs?.[sel];
 
   const bars: TrendBar[] = buckets.map((b, i) => ({
     label: shortLabel(b.from, period),
-    value: aggs ? dailyAvg(metric, aggs[i]) : null,
+    value: aggs
+      ? isFeedView
+        ? dailyAvgFeed(feedMethod, aggs[i])
+        : dailyAvg(metric, aggs[i])
+      : null,
     isCurrent: b.isCurrent,
   }));
 
-  const selVal = selAgg ? dailyAvg(metric, selAgg) : null;
-  const selDays = selAgg ? daysRecorded(metric, selAgg) : 0;
+  const selVal = selAgg
+    ? isFeedView
+      ? dailyAvgFeed(feedMethod, selAgg)
+      : dailyAvg(metric, selAgg)
+    : null;
+  const selDays = selAgg
+    ? isFeedView
+      ? daysRecordedFeed(feedMethod, selAgg)
+      : daysRecorded(metric, selAgg)
+    : 0;
+  // 趋势图标题与数值格式化：喂奶下走 FeedMethod 元数据，其它指标沿用 meta
+  const trendTitle = isFeedView ? `${fmMeta.emoji} ${fmMeta.trendTitle}` : `${meta.emoji} ${meta.label}量趋势`;
+  const trendFormat = isFeedView ? fmMeta.format : meta.format;
   const caption = !aggs
     ? "加载中…"
     : selVal != null
-      ? `日均 ${meta.format(selVal)} · 共 ${selDays} 天有数据`
+      ? `日均 ${trendFormat(selVal)} · 共 ${selDays} 天有数据`
       : "该期无记录";
 
   /** 切粒度时把选中归位到当前期（末根），避免越界与 effect 里 setState */
@@ -160,19 +186,34 @@ export default function StatsPage() {
             ))}
           </div>
 
+          {/* 喂奶方式切换：仅喂奶指标下展示 */}
+          {isFeedView && (
+            <div className="-mt-2 flex justify-center gap-2">
+              {FEEDING_METHOD_OPTIONS.map((f) => (
+                <Chip
+                  key={f.value}
+                  selected={feedMethod === f.value}
+                  onClick={() => setFeedMethodOverride(f.value)}
+                  selectedClass="border-transparent bg-rose-500 text-white"
+                  className="min-h-8 flex-none px-4 py-1 text-xs"
+                >
+                  {f.emoji} {f.label}
+                </Chip>
+              ))}
+            </div>
+          )}
+
           {/* 趋势图 */}
           <section>
             <div className="mb-2 flex items-center justify-between px-1">
-              <h3 className="text-sm font-semibold">
-                {meta.emoji} {meta.label}量趋势
-              </h3>
+              <h3 className="text-sm font-semibold">{trendTitle}</h3>
               <span className="text-xs text-muted-foreground">日均 · {TREND_LABEL[period]}</span>
             </div>
             <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
               <TrendChart
                 bars={bars}
                 accent={meta.accent}
-                formatValue={meta.format}
+                formatValue={trendFormat}
                 selectedIndex={sel}
                 onSelect={setSelectedIndex}
               />
@@ -198,7 +239,7 @@ export default function StatsPage() {
               )}
             </div>
             {selAgg ? (
-              <MetricDetail metric={metric} agg={selAgg} />
+              <MetricDetail metric={metric} agg={selAgg} feedMethod={feedMethod} />
             ) : (
               <div className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
                 {aggs ? "该期暂无记录" : "加载中…"}

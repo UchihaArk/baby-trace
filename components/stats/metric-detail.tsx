@@ -1,7 +1,7 @@
 "use client";
 
 import type { BucketAgg } from "@/lib/types";
-import { formatDurationLong, formatMl, formatMinutes, type Metric } from "./metrics";
+import { formatDurationLong, formatMl, formatMinutes, type FeedMethod, type Metric } from "./metrics";
 
 const dash = "—";
 
@@ -17,9 +17,43 @@ function Cell({ label, value, unit }: { label: string; value: string; unit?: str
   );
 }
 
-/** 选中周期的指标明细；字段随 metric 自适应 */
-export function MetricDetail({ metric, agg }: { metric: Metric; agg: BucketAgg }) {
+/** 选中周期的指标明细；字段随 metric 自适应。喂奶 metric 下按 feedMethod 切换视图。 */
+export function MetricDetail({
+  metric,
+  agg,
+  feedMethod = "bottle",
+}: {
+  metric: Metric;
+  agg: BucketAgg;
+  feedMethod?: FeedMethod;
+}) {
   if (metric === "feed") {
+    if (feedMethod === "breast") {
+      const days = agg.daysWithData.breast;
+      const avgCount = days > 0 ? agg.breastCount / days : null;
+      const perSession = agg.breastCount > 0 ? agg.breastMinutes / agg.breastCount : null;
+      return (
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-3">
+            <Cell label="日均次数" value={avgCount != null ? avgCount.toFixed(1) : dash} unit="次" />
+            <Cell label="总次数" value={`${agg.breastCount}`} unit="次" />
+            <Cell label="总时长" value={agg.breastMinutes > 0 ? formatMinutes(agg.breastMinutes) : dash} />
+            <Cell label="单次均" value={perSession != null ? formatMinutes(perSession) : dash} />
+            <Cell label="最长单次" value={agg.breastMax > 0 ? formatMinutes(agg.breastMax) : dash} />
+            <Cell label="有数据" value={`${days}`} unit="天" />
+          </div>
+          <div>
+            <div className="mb-1.5 px-1 text-xs text-muted-foreground">侧别分布（按次数）</div>
+            <div className="grid grid-cols-3 gap-3">
+              <Cell label="⬅️ 左侧" value={`${agg.breastLeftCount}`} unit="次" />
+              <Cell label="➡️ 右侧" value={`${agg.breastRightCount}`} unit="次" />
+              <Cell label="🤱 双侧" value={`${agg.breastBothCount}`} unit="次" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+    // 瓶喂：沿用奶量视图
     const days = agg.daysWithData.bottle;
     const avg = days > 0 ? agg.bottleMl / days : null;
     const perFeed = agg.bottleCount > 0 ? agg.bottleMl / agg.bottleCount : null;
@@ -30,7 +64,7 @@ export function MetricDetail({ metric, agg }: { metric: Metric; agg: BucketAgg }
         <Cell label="奶瓶次数" value={`${agg.bottleCount}`} unit="次" />
         <Cell label="单次均" value={perFeed != null ? formatMl(perFeed) : dash} />
         <Cell label="最大" value={agg.bottleCount > 0 ? formatMl(agg.bottleMax) : dash} />
-        <Cell label="亲喂" value={agg.breastMinutes > 0 ? formatMinutes(agg.breastMinutes) : dash} />
+        <Cell label="有数据" value={`${days}`} unit="天" />
       </div>
     );
   }

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Chip } from "@/components/log-entry/chip";
 import { BabyAvatar } from "./baby-avatar";
-import { BABY_COLOR_OPTIONS, BABY_EMOJI_OPTIONS, GENDER_OPTIONS } from "@/lib/baby";
+import { BABY_COLOR_OPTIONS, BABY_EMOJI_OPTIONS, FEEDING_METHOD_OPTIONS, GENDER_OPTIONS } from "@/lib/baby";
 import { createBaby, updateBaby } from "@/lib/mutations";
 import { cn } from "@/lib/utils";
 import type { Baby, CreateBabyInput } from "@/lib/types";
@@ -58,6 +58,9 @@ function BabyForm({
   const [gender, setGender] = useState<"male" | "female" | "other" | undefined>(
     editing?.gender ?? undefined
   );
+  const [feedingMethod, setFeedingMethod] = useState<"breast" | "bottle">(
+    editing?.feedingMethod ?? "breast"
+  );
   const [emoji, setEmoji] = useState(editing?.avatarEmoji ?? "👶");
   const [color, setColor] = useState<string>(editing?.avatarColor ?? "rose");
   const [saving, setSaving] = useState(false);
@@ -69,6 +72,7 @@ function BabyForm({
       name: name.trim(),
       birthDate,
       gender,
+      feedingMethod,
       avatarEmoji: emoji,
       avatarColor: color as CreateBabyInput["avatarColor"],
     };
@@ -125,6 +129,23 @@ function BabyForm({
                 selectedClass="border-transparent bg-primary text-primary-foreground"
               >
                 {g.emoji} {g.label}
+              </Chip>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>主要喂养方式</Label>
+          <div className="text-xs text-muted-foreground">用于「统计」页喂奶指标的默认视图，可在统计页临时切换。</div>
+          <div className="flex gap-2">
+            {FEEDING_METHOD_OPTIONS.map((f) => (
+              <Chip
+                key={f.value}
+                selected={feedingMethod === f.value}
+                onClick={() => setFeedingMethod(f.value)}
+                selectedClass="border-transparent bg-primary text-primary-foreground"
+              >
+                {f.emoji} {f.label}
               </Chip>
             ))}
           </div>

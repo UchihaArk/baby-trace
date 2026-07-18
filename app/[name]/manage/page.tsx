@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useBaby } from "@/components/baby/baby-provider";
 import { getBirthExtras } from "@/lib/chinese-calendar";
-import { GENDER_OPTIONS } from "@/lib/baby";
+import { FEEDING_METHOD_OPTIONS, GENDER_OPTIONS } from "@/lib/baby";
 import { clearBabyAccessCode, setBabyAccessCode } from "@/lib/mutations";
 
 export default function ManagePage() {
@@ -45,6 +45,9 @@ export default function ManagePage() {
 
   const genderLabel = baby.gender
     ? GENDER_OPTIONS.find((g) => g.value === baby.gender)?.label ?? "未填写"
+    : "未填写";
+  const feedingMethodLabel = baby.feedingMethod
+    ? FEEDING_METHOD_OPTIONS.find((f) => f.value === baby.feedingMethod)?.label ?? "未填写"
     : "未填写";
   const extras = getBirthExtras(baby.birthDate);
 
@@ -75,6 +78,10 @@ export default function ManagePage() {
           <div className="flex justify-between">
             <dt className="text-muted-foreground">性别</dt>
             <dd className="font-medium">{genderLabel}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">主要喂养方式</dt>
+            <dd className="font-medium">{feedingMethodLabel}</dd>
           </div>
           {extras && (
             <>

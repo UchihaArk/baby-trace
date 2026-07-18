@@ -76,6 +76,11 @@ export type BucketAgg = {
   bottleMax: number;
   bottleMin: number;
   breastMinutes: number;
+  breastCount: number;
+  breastMax: number; // 单次亲喂最大分钟
+  breastLeftCount: number; // 左侧次数
+  breastRightCount: number; // 右侧次数
+  breastBothCount: number; // 双侧次数
   diaperCount: number;
   wetCount: number;
   dirtyCount: number;
@@ -94,12 +99,13 @@ export type BucketAgg = {
     diaper: number;
     pump: number;
     sleep: number;
+    breast: number;
   };
 };
 
 export type TrendResponse = BucketAgg[];
 
-function safeParse(s: string): { method?: string; type?: string } | null {
+function safeParse(s: string): { method?: string; type?: string; side?: string } | null {
   try {
     return JSON.parse(s);
   } catch {
@@ -370,6 +376,11 @@ export const statsRoutes = new Hono<AppEnv>()
       bottleMax: 0,
       bottleMin: Number.POSITIVE_INFINITY,
       breastMinutes: 0,
+      breastCount: 0,
+      breastMax: 0,
+      breastLeftCount: 0,
+      breastRightCount: 0,
+      breastBothCount: 0,
       diaperCount: 0,
       wetCount: 0,
       dirtyCount: 0,
@@ -387,6 +398,7 @@ export const statsRoutes = new Hono<AppEnv>()
       daysDiaper: new Set<number>(),
       daysPump: new Set<number>(),
       daysSleep: new Set<number>(),
+      daysBreast: new Set<number>(),
     }));
 
     for (const r of rows) {
@@ -410,6 +422,12 @@ export const statsRoutes = new Hono<AppEnv>()
           a.daysBottle.add(dayIdx);
         } else if (d?.method === "breast" && r.amount != null) {
           a.breastMinutes += r.amount;
+          a.breastCount += 1;
+          if (r.amount > a.breastMax) a.breastMax = r.amount;
+          if (d.side === "left") a.breastLeftCount += 1;
+          else if (d.side === "right") a.breastRightCount += 1;
+          else a.breastBothCount += 1; // both 或缺省都算双侧
+          a.daysBreast.add(dayIdx);
         }
       } else if (r.activityType === "diaper") {
         a.diaperCount += 1;
@@ -444,6 +462,11 @@ export const statsRoutes = new Hono<AppEnv>()
       bottleMax: a.bottleMax,
       bottleMin: a.bottleCount > 0 ? a.bottleMin : 0,
       breastMinutes: a.breastMinutes,
+      breastCount: a.breastCount,
+      breastMax: a.breastMax,
+      breastLeftCount: a.breastLeftCount,
+      breastRightCount: a.breastRightCount,
+      breastBothCount: a.breastBothCount,
       diaperCount: a.diaperCount,
       wetCount: a.wetCount,
       dirtyCount: a.dirtyCount,
@@ -461,6 +484,7 @@ export const statsRoutes = new Hono<AppEnv>()
         diaper: a.daysDiaper.size,
         pump: a.daysPump.size,
         sleep: a.daysSleep.size,
+        breast: a.daysBreast.size,
       },
     }));
 
