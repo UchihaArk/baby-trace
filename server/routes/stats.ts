@@ -14,6 +14,7 @@ const todayQuerySchema = z.object({
 export type TodayStats = {
   bottleMl: number;
   breastMin: number;
+  breastCount: number;
   diaperCount: number;
   wetCount: number;
   dirtyCount: number;
@@ -133,6 +134,7 @@ export const statsRoutes = new Hono<AppEnv>()
 
     let bottleMl = 0;
     let breastMin = 0;
+    let breastCount = 0;
     let diaperCount = 0;
     let wetCount = 0;
     let dirtyCount = 0;
@@ -144,7 +146,10 @@ export const statsRoutes = new Hono<AppEnv>()
         feedCount += 1;
         const d = r.details ? safeParse(r.details) : null;
         if (d?.method === "bottle") bottleMl += r.amount ?? 0;
-        else if (d?.method === "breast") breastMin += r.amount ?? 0;
+        else if (d?.method === "breast") {
+          breastMin += r.amount ?? 0;
+          breastCount += 1;
+        }
       } else if (r.activityType === "diaper") {
         diaperCount += 1;
         const dd = r.details ? safeParse(r.details) : null;
@@ -232,6 +237,7 @@ export const statsRoutes = new Hono<AppEnv>()
     const stats: TodayStats = {
       bottleMl,
       breastMin,
+      breastCount,
       diaperCount,
       wetCount,
       dirtyCount,

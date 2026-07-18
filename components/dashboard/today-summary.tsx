@@ -74,6 +74,7 @@ export function TodaySummary({ babyId }: { babyId: number }) {
 
   const bottleMl = data?.bottleMl ?? 0;
   const breastMin = data?.breastMin ?? 0;
+  const breastCount = data?.breastCount ?? 0;
   const diaperCount = data?.diaperCount ?? 0;
   const wetCount = data?.wetCount ?? 0;
   const dirtyCount = data?.dirtyCount ?? 0;
@@ -126,9 +127,9 @@ export function TodaySummary({ babyId }: { babyId: number }) {
         }
         sub={
           feedBreastOnly
-            ? `瓶喂 ${bottleMl} ml`
-            : breastMin > 0
-              ? `亲喂 ${breastMin} 分钟`
+            ? `共 ${breastCount} 次 · 瓶喂 ${bottleMl} ml`
+            : breastCount > 0
+              ? `亲喂 ${breastCount} 次(共 ${breastMin} 分钟)`
               : undefined
         }
         icon={Utensils}
@@ -155,13 +156,19 @@ export function TodaySummary({ babyId }: { babyId: number }) {
       <StatCard
         label="今日产奶"
         tone={pumpMl === 0 && breastMin === 0 ? "default" : pumpGapSt?.level ?? "default"}
-        value={<MlValue ml={pumpMl} />}
+        value={
+          pumpMl === 0 && breastMin > 0 ? (
+            <span className="text-xl">均用于亲喂</span>
+          ) : (
+            <MlValue ml={pumpMl} />
+          )
+        }
         sub={
           pumpMl === 0 && breastMin === 0 ? (
             <span>今天还没有吸奶 💪</span>
           ) : pumpMl === 0 && breastMin > 0 ? (
             <span className={cn(pumpGapSt?.textClass && "font-medium", pumpGapSt?.textClass)}>
-              今日均用于亲喂 · 距上次 {gapClock(pumpGap)}
+              距上次 {gapClock(pumpGap)}
             </span>
           ) : (
             <span className={cn(pumpGapSt?.textClass && "font-medium", pumpGapSt?.textClass)}>
