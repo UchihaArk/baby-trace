@@ -54,7 +54,7 @@ export default function ManagePage() {
   return (
     <main className="space-y-4 px-4 pb-8 pt-3">
       {/* 宝宝资料 */}
-      <section className="rounded-2xl bg-card p-4 ring-1 ring-foreground/10">
+      <section className="ui-card p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-muted-foreground">宝宝资料</h2>
           <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
@@ -99,7 +99,7 @@ export default function ManagePage() {
       </section>
 
       {/* 访问暗号 */}
-      <section className="rounded-2xl bg-card p-4 ring-1 ring-foreground/10">
+      <section className="ui-card p-4">
         <h2 className="text-sm font-semibold text-muted-foreground">访问暗号</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           设置后，进入{baby.name}宝宝的记录前需先输入暗号。
@@ -120,7 +120,7 @@ export default function ManagePage() {
       </section>
 
       {/* 切换宝宝 */}
-      <section className="rounded-2xl bg-card p-4 ring-1 ring-foreground/10">
+      <section className="ui-card p-4">
         <h2 className="text-sm font-semibold text-muted-foreground">切换宝宝</h2>
         <p className="mt-1 text-xs text-muted-foreground">退出当前宝宝，回到宝宝选择列表。</p>
         <Link

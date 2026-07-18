@@ -209,7 +209,7 @@ export default function StatsPage() {
               <h3 className="text-sm font-semibold">{trendTitle}</h3>
               <span className="text-xs text-muted-foreground">日均 · {TREND_LABEL[period]}</span>
             </div>
-            <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
+            <div className="ui-card p-3">
               <TrendChart
                 bars={bars}
                 accent={meta.accent}
@@ -276,7 +276,7 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-xl py-2 text-sm font-semibold transition",
+        "rounded-xl py-2 text-sm font-semibold transition duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
         active ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
       )}
     >
@@ -295,7 +295,7 @@ function CareCell({
   data: { avgSeconds: number; count: number } | null | undefined;
 }) {
   return (
-    <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
+    <div className="ui-card p-3">
       <div className="text-xs text-muted-foreground">
         {emoji} {label}
       </div>

@@ -7,7 +7,7 @@ const dash = "—";
 
 function Cell({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
-    <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
+    <div className="ui-card p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 text-lg font-bold tabular-nums">
         {value}
