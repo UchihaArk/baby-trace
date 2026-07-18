@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
-import { and, desc, eq, gte, inArray, isNull, lt } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import type { AppEnv } from "../env";
 import { createDb, schema } from "../db";
 import { toLog } from "../lib";
@@ -20,6 +20,7 @@ export type TodayStats = {
   feedCount: number;
   pumpMl: number;
   lastFeed: ReturnType<typeof toLog> | null;
+  lastBreastFeed: ReturnType<typeof toLog> | null;
   lastPump: ReturnType<typeof toLog> | null;
   lastDiaper: ReturnType<typeof toLog> | null;
   openSleep: ReturnType<typeof toLog> | null;
@@ -162,6 +163,21 @@ export const statsRoutes = new Hono<AppEnv>()
       .limit(1)
       .all();
 
+    // 最近一次亲喂（feed 中 method=breast）：用于「今日产奶」时差，亲喂也算变相产奶
+    const [lastBreastFeed] = await db
+      .select()
+      .from(schema.babyLogs)
+      .where(
+        and(
+          eq(schema.babyLogs.babyId, babyId),
+          eq(schema.babyLogs.activityType, "feed"),
+          sql`json_extract(${schema.babyLogs.details}, '$.method') = 'breast'`
+        )
+      )
+      .orderBy(desc(schema.babyLogs.startTime))
+      .limit(1)
+      .all();
+
     const [lastPump] = await db
       .select()
       .from(schema.babyLogs)
@@ -222,6 +238,7 @@ export const statsRoutes = new Hono<AppEnv>()
       feedCount,
       pumpMl,
       lastFeed: lastFeed ? toLog(lastFeed) : null,
+      lastBreastFeed: lastBreastFeed ? toLog(lastBreastFeed) : null,
       lastPump: lastPump ? toLog(lastPump) : null,
       lastDiaper: lastDiaper ? toLog(lastDiaper) : null,
       openSleep: openSleep ? toLog(openSleep) : null,
