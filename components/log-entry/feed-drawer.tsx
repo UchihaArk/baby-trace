@@ -27,7 +27,9 @@ const BREAST_PRESETS = [5, 10, 15, 20, 30];
 
 function initMethod(editing: LogApi | null): Method {
   const d = editing?.details;
-  return d && "method" in d && d.method === "breast" ? "breast" : "bottle";
+  // 新建默认「亲喂」；编辑时沿用原记录的方式
+  if (d && "method" in d) return d.method;
+  return "breast";
 }
 function initMilk(editing: LogApi | null): Milk {
   const d = editing?.details;
@@ -35,11 +37,13 @@ function initMilk(editing: LogApi | null): Milk {
 }
 function initAmount(editing: LogApi | null, method: Method): number {
   if (editing?.amount != null) return editing.amount;
-  return method === "bottle" ? 120 : 15;
+  return method === "bottle" ? 120 : 20;
 }
 function initSide(editing: LogApi | null): Side {
   const d = editing?.details;
-  return d && "method" in d && d.method === "breast" && d.side ? d.side : "left";
+  // 新建默认「双侧」；编辑亲喂记录时沿用原侧别
+  if (d && "method" in d && d.method === "breast" && d.side) return d.side;
+  return "both";
 }
 
 export function FeedDrawer({
@@ -115,16 +119,16 @@ function FeedForm({
         <DrawerTitle className="text-base font-semibold">
           {editing ? "编辑喂奶" : "🍼 记录喂奶"}
         </DrawerTitle>
-        <DrawerDescription className="sr-only">奶瓶或亲喂</DrawerDescription>
+        <DrawerDescription className="sr-only">亲喂或奶瓶</DrawerDescription>
       </DrawerHeader>
 
       <div className="flex flex-col gap-5 overflow-y-auto px-4 pb-2">
         <div className="flex gap-2">
-          <Chip selected={method === "bottle"} onClick={() => setMethod("bottle")} selectedClass="border-transparent bg-rose-500 text-white">
-            🍼 奶瓶
-          </Chip>
           <Chip selected={method === "breast"} onClick={() => setMethod("breast")} selectedClass="border-transparent bg-rose-500 text-white">
             🤱 亲喂
+          </Chip>
+          <Chip selected={method === "bottle"} onClick={() => setMethod("bottle")} selectedClass="border-transparent bg-rose-500 text-white">
+            🍼 奶瓶
           </Chip>
         </div>
 
@@ -145,7 +149,7 @@ function FeedForm({
               <Minus />
             </Button>
             <div className="text-center">
-              <div className="text-4xl font-bold tabular-nums">{amount}</div>
+              <div className="text-4xl font-bold tabular-nums tracking-tight">{amount}</div>
               <div className="text-xs text-muted-foreground">{unit}</div>
             </div>
             <Button variant="outline" size="icon-lg" onClick={() => adjust(step)} aria-label="增加">
@@ -169,7 +173,7 @@ function FeedForm({
 
         {method === "breast" && (
           <div className="flex gap-2">
-            {(["left", "right", "both"] as const).map((s) => (
+            {(["both", "left", "right"] as const).map((s) => (
               <Chip
                 key={s}
                 selected={side === s}

@@ -8,7 +8,9 @@
   // 静态资源（Next.js 构建产物）
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // _next/static/* 均为带 hash 的不可变资源，长期缓存；内容变更时 hash 改变、URL 随之改变，边缘自动失效
+    "cache_control": "public, max-age=31536000, immutable"
   },
   "d1_databases": [
     {

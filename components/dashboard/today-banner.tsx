@@ -34,7 +34,7 @@ export function TodayBanner() {
   const stamp = milestoneLabel(completedMonths(new Date(baby.birthDate), now));
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl bg-muted/50 px-4 py-3">
+    <div className="ui-card flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
         <div className="text-sm">
           <span className="mr-1.5">📅</span>

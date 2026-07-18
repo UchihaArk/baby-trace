@@ -78,7 +78,7 @@ export default function HistoryPage() {
       </div>
 
       {/* 日期选择器：左右箭头 + date input */}
-      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-2">
+      <div className="ui-bar ui-hairline-b sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 flex items-center justify-between gap-2 px-4 py-2">
         <button
           type="button"
           onClick={() => shiftDay(-1)}

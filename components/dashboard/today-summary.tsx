@@ -19,12 +19,12 @@ function useNowTick(active: boolean) {
   return nowSec();
 }
 
-/** 卡片铺色：按间隔状态给整张卡上背景/边框。Tailwind 字面量。 */
+/** 卡片铺色：按间隔状态给整张卡上背景/发丝线。Tailwind 字面量。 */
 const TONE_CARD: Record<GapLevel | "default", string> = {
-  ok: "bg-emerald-500/10 ring-emerald-500/30",
-  focus: "bg-amber-500/10 ring-amber-500/30",
-  suggest: "bg-rose-500/10 ring-rose-500/30",
-  default: "bg-card ring-foreground/10",
+  ok: "bg-emerald-500/10 ring-emerald-500/25",
+  focus: "bg-amber-500/10 ring-amber-500/25",
+  suggest: "bg-rose-500/10 ring-rose-500/25",
+  default: "bg-card ring-foreground/[0.06]",
 };
 
 function StatCard({
@@ -45,7 +45,7 @@ function StatCard({
   tone?: GapLevel | "default";
 }) {
   return (
-    <div className={cn("rounded-2xl p-4 ring-1 transition-colors", TONE_CARD[tone])}>
+    <div className={cn("rounded-2xl p-4 ring-1 shadow-sm transition-colors", TONE_CARD[tone])}>
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <span className={cn("flex size-6 items-center justify-center rounded-full", accentBg)}>

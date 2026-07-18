@@ -17,10 +17,10 @@ export function Chip({
       type="button"
       aria-pressed={selected}
       className={cn(
-        "inline-flex min-h-12 flex-1 items-center justify-center rounded-2xl border px-4 py-2.5 text-sm font-semibold transition active:scale-[.97] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+        "inline-flex min-h-12 flex-1 items-center justify-center rounded-2xl border border-transparent px-4 py-2.5 text-sm font-semibold transition duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)] active:scale-[.97] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
         selected
-          ? selectedClass ?? "border-transparent bg-primary text-primary-foreground"
-          : "border-border bg-background text-foreground hover:bg-muted",
+          ? cn("shadow-sm", selectedClass ?? "bg-primary text-primary-foreground")
+          : "bg-muted/60 text-foreground hover:bg-muted",
         className
       )}
       {...props}

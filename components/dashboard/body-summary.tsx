@@ -62,7 +62,7 @@ function MeasureCard({
   }
 
   return (
-    <div className={cn("rounded-2xl bg-card p-4 ring-1 ring-foreground/10", latest && cfg.accentRing)}>
+    <div className={cn("rounded-2xl bg-card p-4 ring-1 ring-foreground/[0.06] shadow-sm", latest && cfg.accentRing)}>
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground">
           {cfg.emoji} {cfg.label}

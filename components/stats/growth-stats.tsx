@@ -192,7 +192,7 @@ export function GrowthStats({ babyId }: { babyId: number }) {
           </h3>
           <span className="text-xs text-muted-foreground">{caption}</span>
         </div>
-        <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
+        <div className="ui-card p-3">
           {points.some((p) => p.value != null) ? (
             <GrowthChart
               points={points}
@@ -230,7 +230,7 @@ export function GrowthStats({ babyId }: { babyId: number }) {
           {inRange.length > 0 && <span className="text-xs text-muted-foreground">{inRange.length} 次记录</span>}
         </div>
         {inRange.length > 0 ? (
-          <div className="space-y-2 rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
+          <div className="space-y-2 ui-card p-3">
             {[...inRange].reverse().map((m) => (
               <div key={m.id} className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{formatChineseDate(new Date(m.measuredAt * 1000))}</span>

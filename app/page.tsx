@@ -18,9 +18,9 @@ export default function BabyListPage() {
 
   return (
     <div className="mx-auto min-h-dvh w-full max-w-md">
-      <header className="sticky top-0 z-30 bg-background px-4 pt-[env(safe-area-inset-top)]">
+      <header className="ui-bar ui-hairline-b sticky top-0 z-30 px-4 pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-14 max-w-md items-center justify-between">
-          <h1 className="text-lg font-bold">宝贝清单</h1>
+          <h1 className="text-lg font-bold tracking-tight">宝贝清单</h1>
           <ThemeToggle />
         </div>
       </header>
@@ -35,7 +35,7 @@ export default function BabyListPage() {
               <Link
                 key={b.id}
                 href={`/${encodeURIComponent(b.name)}`}
-                className="flex items-center gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/10 transition active:scale-[.99]"
+                className="flex items-center gap-3 ui-card p-4 transition active:scale-[.99]"
               >
                 <BabyAvatar emoji={b.avatarEmoji} color={b.avatarColor} className="size-12 text-2xl" />
                 <div className="min-w-0 flex-1">

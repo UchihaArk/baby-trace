@@ -53,7 +53,7 @@ function ChartTooltip({
   const raw = p.value;
   const v = typeof raw === "number" ? raw : null;
   return (
-    <div className="rounded-lg bg-card px-2.5 py-1.5 shadow-md ring-1 ring-foreground/10">
+    <div className="rounded-lg bg-card px-2.5 py-1.5 shadow-md ring-1 ring-foreground/[0.06]">
       <div className="text-[0.6rem] text-muted-foreground">{p.payload?.fullLabel}</div>
       <div className={`text-xs font-bold tabular-nums ${ACCENT_TEXT[accent]}`}>
         {v != null ? formatValue(v) : "无数据"}

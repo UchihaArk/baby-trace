@@ -93,7 +93,7 @@ export function VaccineHistoryDrawer({
                   <li
                     key={v.id}
                     className={cn(
-                      "flex items-center gap-3 rounded-2xl bg-card p-3 ring-1 ring-foreground/10",
+                      "flex items-center gap-3 ui-card p-3",
                       v.id === deletingId && "opacity-60"
                     )}
                   >

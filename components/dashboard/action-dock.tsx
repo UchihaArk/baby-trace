@@ -28,7 +28,7 @@ function BigButton({
       onClick={onClick}
       disabled={disabled}
       className={
-        "flex flex-col items-center justify-center gap-0.5 rounded-3xl py-5 text-white shadow-sm transition active:scale-[.98] disabled:opacity-60 " +
+        "flex flex-col items-center justify-center gap-0.5 rounded-3xl py-5 text-white shadow-lg transition duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:brightness-105 active:scale-[.97] disabled:opacity-60 " +
         className
       }
     >
@@ -55,7 +55,7 @@ function CareButton({
       type="button"
       onClick={onClick}
       className={
-        "flex flex-col items-center justify-center gap-0.5 rounded-2xl py-3 text-white shadow-sm transition active:scale-[.98] " +
+        "flex flex-col items-center justify-center gap-0.5 rounded-2xl py-3 text-white shadow-lg transition duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:brightness-105 active:scale-[.97] " +
         className
       }
     >
@@ -75,7 +75,7 @@ function LastCareCard({
   last?: LogApi | null;
 }) {
   return (
-    <div className="rounded-2xl bg-card p-3 ring-1 ring-foreground/10">
+    <div className="ui-card p-3">
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
         <span>{emoji}</span>
         <span>上次{label}</span>
@@ -107,9 +107,9 @@ export function ActionDock({ babyId }: { babyId: number }) {
       <section className="space-y-3">
         <h3 className="px-1 text-xs font-semibold text-muted-foreground">喂养</h3>
         <div className="grid grid-cols-3 gap-3">
-          <BigButton onClick={() => openFeed()} emoji="🍼" label="喂奶" className="bg-rose-500 hover:bg-rose-500/90" />
-          <BigButton onClick={() => openDiaper()} emoji="🧻" label="换尿布" className="bg-amber-500 hover:bg-amber-500/90" />
-          <BigButton onClick={() => openPump()} emoji="🥛" label="吸奶" className="bg-teal-500 hover:bg-teal-500/90" />
+          <BigButton onClick={() => openFeed()} emoji="🍼" label="喂奶" className="bg-gradient-to-b from-rose-500 to-rose-600 shadow-rose-500/25" />
+          <BigButton onClick={() => openDiaper()} emoji="🧻" label="换尿布" className="bg-gradient-to-b from-amber-500 to-amber-600 shadow-amber-500/25" />
+          <BigButton onClick={() => openPump()} emoji="🥛" label="吸奶" className="bg-gradient-to-b from-teal-500 to-teal-600 shadow-teal-500/25" />
         </div>
         <BigButton
           onClick={onSleep}
@@ -117,7 +117,7 @@ export function ActionDock({ babyId }: { babyId: number }) {
           emoji="💤"
           label={sleeping ? "停止睡眠" : "开始睡眠"}
           sub={sleeping && elapsed != null ? `已睡 ${formatClock(elapsed)}` : "点击计时"}
-          className="bg-indigo-500 hover:bg-indigo-500/90 w-full"
+          className="bg-gradient-to-b from-indigo-500 to-indigo-600 shadow-indigo-500/25 w-full"
         />
       </section>
 
@@ -130,9 +130,9 @@ export function ActionDock({ babyId }: { babyId: number }) {
           <LastCareCard emoji="✂️" label="剪指甲" last={data?.lastNail} />
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <CareButton onClick={() => openBath()} emoji="🛁" label="洗澡" className="bg-sky-500 hover:bg-sky-500/90" />
-          <CareButton onClick={() => openHaircut()} emoji="💈" label="理发" className="bg-violet-500 hover:bg-violet-500/90" />
-          <CareButton onClick={() => openNail()} emoji="✂️" label="剪指甲" className="bg-emerald-500 hover:bg-emerald-500/90" />
+          <CareButton onClick={() => openBath()} emoji="🛁" label="洗澡" className="bg-gradient-to-b from-sky-500 to-sky-600 shadow-sky-500/25" />
+          <CareButton onClick={() => openHaircut()} emoji="💈" label="理发" className="bg-gradient-to-b from-violet-500 to-violet-600 shadow-violet-500/25" />
+          <CareButton onClick={() => openNail()} emoji="✂️" label="剪指甲" className="bg-gradient-to-b from-emerald-500 to-emerald-600 shadow-emerald-500/25" />
         </div>
       </section>
     </div>

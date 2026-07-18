@@ -10,7 +10,7 @@ export const BabyHeader = memo(function BabyHeader() {
   const { baby } = useBaby();
 
   return (
-    <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)]">
+    <header className="ui-bar ui-hairline-b sticky top-0 z-30 pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex h-14 max-w-md items-center justify-between gap-2 px-4">
         <div className="flex min-w-0 items-center gap-2.5">
           {baby ? (

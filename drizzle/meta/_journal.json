@@ -15,6 +15,27 @@
       "when": 1782961130651,
       "tag": "0001_cute_guardsmen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1783755429397,
+      "tag": "0002_nasty_marvel_zombies",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1783765760999,
+      "tag": "0003_married_switch",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1784362265078,
+      "tag": "0004_cultured_doctor_faustus",
+      "breakpoints": true
     }
   ]
 }
