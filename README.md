@@ -31,36 +31,27 @@
 
 <table>
   <tr>
-    <td width="33.3%" align="center"><b>创建宝宝档案</b></td>
     <td width="33.3%" align="center"><b>仪表盘首页</b></td>
     <td width="33.3%" align="center"><b>记录喂奶</b></td>
-  </tr>
-  <tr>
-    <td><img src="docs/images/01-onboarding.png" alt="创建宝宝档案"/></td>
-    <td><img src="docs/images/02-dashboard.png" alt="仪表盘首页"/></td>
-    <td><img src="docs/images/03-feed.png" alt="记录喂奶"/></td>
-  </tr>
-  <tr>
     <td width="33.3%" align="center"><b>记录辅食</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/images/01-onboarding.png" alt="仪表盘首页"/></td>
+    <td><img src="docs/images/02-dashboard.png" alt="记录喂奶"/></td>
+    <td><img src="docs/images/04-food.png" alt="记录辅食"/></td>
+  </tr>
+  <tr>
+    <td width="33.3%" align="center"><b>历史时间线</b></td>
     <td width="33.3%" align="center"><b>统计 · 记录</b></td>
     <td width="33.3%" align="center"><b>统计 · 成长曲线</b></td>
   </tr>
   <tr>
-    <td><img src="docs/images/04-food.png" alt="记录辅食"/></td>
-    <td><img src="docs/images/05-stats.png" alt="统计 记录"/></td>
-    <td><img src="docs/images/06-growth.png" alt="成长曲线"/></td>
-  </tr>
-  <tr>
-    <td width="33.3%" align="center"><b>历史时间线</b></td>
-    <td width="33.3%" align="center"><b>疫苗接种</b></td>
-    <td width="33.3%" align="center"><b>深色模式</b></td>
-  </tr>
-  <tr>
     <td><img src="docs/images/07-history.png" alt="历史时间线"/></td>
-    <td><img src="docs/images/08-vaccine.png" alt="疫苗接种"/></td>
-    <td><img src="docs/images/09-dark.png" alt="深色模式"/></td>
+    <td><img src="docs/images/08-vaccine.png" alt="统计 记录"/></td>
+    <td><img src="docs/images/09-dark.png" alt="成长曲线"/></td>
   </tr>
 </table>
+
 
 ## 🧰 技术栈
 
