@@ -1,6 +1,6 @@
-import { Baby, Bath, Droplets, Hand, Moon, Scissors, Utensils, type LucideIcon } from "lucide-react";
+import { Baby, Bath, Droplets, Hand, Moon, Scissors, Soup, Utensils, type LucideIcon } from "lucide-react";
 import { formatDuration } from "./time";
-import type { ActivityType, DiaperDetails, LogApi, NailDetails } from "./types";
+import type { ActivityType, DiaperDetails, FoodDetails, LogApi, NailDetails } from "./types";
 
 type Meta = {
   label: string;
@@ -85,6 +85,16 @@ export const activityMeta: Record<ActivityType, Meta> = {
     ring: "ring-emerald-500/30",
     border: "border-emerald-500/20",
   },
+  food: {
+    label: "辅食",
+    emoji: "🥣",
+    icon: Soup,
+    text: "text-orange-600 dark:text-orange-400",
+    bgSolid: "bg-orange-500",
+    bgSoft: "bg-orange-500/10",
+    ring: "ring-orange-500/30",
+    border: "border-orange-500/20",
+  },
 };
 
 const diaperTypeLabel: Record<"wet" | "dirty" | "both", string> = {
@@ -135,6 +145,10 @@ export function describeLog(log: LogApi): string {
       return "洗澡";
     case "haircut":
       return "理发";
+    case "food": {
+      const d = log.details as FoodDetails | null;
+      return d?.name ?? "辅食";
+    }
     case "sleep":
     default:
       return log.endTime && log.startTime ? formatDuration(log.endTime - log.startTime) : "进行中";

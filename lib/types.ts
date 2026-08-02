@@ -19,6 +19,7 @@ export type {
   DiaperDetails,
   PumpDetails,
   NailDetails,
+  FoodDetails,
   CreateLogInput,
   UpdateLogInput,
   CreateBabyInput,

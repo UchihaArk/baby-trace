@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const activityTypeSchema = z.enum(["feed", "diaper", "sleep", "pump", "bath", "haircut", "nail"]);
+export const activityTypeSchema = z.enum(["feed", "diaper", "sleep", "pump", "bath", "haircut", "nail", "food"]);
 
 /** 喂奶详情：奶瓶(毫升，母乳/奶粉) 或 亲喂(分钟，含侧别) */
 export const feedDetailsSchema = z.object({
@@ -28,13 +28,20 @@ export const nailDetailsSchema = z.object({
 });
 export type NailDetails = z.infer<typeof nailDetailsSchema>;
 
+/** 辅食详情：食物名称（分类快捷填充或自定义） */
+export const foodDetailsSchema = z.object({
+  name: z.string().trim().min(1).max(40),
+});
+export type FoodDetails = z.infer<typeof foodDetailsSchema>;
+
 const detailsSchema = z.union([
   feedDetailsSchema,
   diaperDetailsSchema,
   pumpDetailsSchema,
   nailDetailsSchema,
+  foodDetailsSchema,
 ]);
-export type LogDetails = FeedDetails | DiaperDetails | PumpDetails | NailDetails;
+export type LogDetails = FeedDetails | DiaperDetails | PumpDetails | NailDetails | FoodDetails;
 
 /** 创建一条记录的入参（必须归属某个 baby） */
 export const createLogSchema = z.object({

@@ -125,24 +125,28 @@ export function GrowthStats({ babyId }: { babyId: number }) {
   }, [buckets, measurements, period]);
 
   const sel = Math.min(selectedIndex, n - 1);
-  const selBucket = buckets[sel];
 
-  // 选中分桶的明细：该区间内所有测量
-  const inRange = useMemo(() => {
-    if (!measurements) return [];
-    return measurements
-      .filter((m) => m.measuredAt >= selBucket.from && m.measuredAt < selBucket.to)
+  // 整个周期的总览：记录数 + 首尾变化
+  const { periodCount, periodDiff } = useMemo(() => {
+    if (!measurements || measurements.length === 0 || n === 0) {
+      return { periodCount: 0, periodDiff: null as number | null };
+    }
+    const from = buckets[0].from;
+    const to = buckets[n - 1].to;
+    const inRange = measurements
+      .filter((m) => m.measuredAt >= from && m.measuredAt < to)
       .sort((a, b) => a.measuredAt - b.measuredAt);
-  }, [measurements, selBucket]);
-  const first = inRange[0];
-  const last = inRange[inRange.length - 1];
-  const diff = first && last ? last.valueGrams - first.valueGrams : null;
-  const diffText =
-    diff == null
+    return {
+      periodCount: inRange.length,
+      periodDiff: inRange.length >= 2 ? inRange[inRange.length - 1].valueGrams - inRange[0].valueGrams : null,
+    };
+  }, [measurements, buckets, n]);
+  const periodDiffText =
+    periodDiff == null
       ? null
-      : diff === 0
+      : periodDiff === 0
         ? "持平"
-        : `${diff > 0 ? "+" : "-"}${meta.format(Math.abs(diff))}`;
+        : `${periodDiff > 0 ? "+" : "-"}${meta.format(Math.abs(periodDiff))}`;
 
   const latestAll = measurements && measurements.length > 0 ? measurements[measurements.length - 1] : null;
 
@@ -207,51 +211,13 @@ export function GrowthStats({ babyId }: { babyId: number }) {
             </div>
           )}
           <div className="mt-2 border-t border-border/50 pt-2 text-center text-xs text-muted-foreground">
-            {inRange.length > 0
-              ? `本期 ${inRange.length} 次记录${diffText ? ` · ${diffText}` : ""}`
+            {periodCount > 0
+              ? `本期 ${periodCount} 次记录${periodDiffText ? ` · ${periodDiffText}` : ""}`
               : measurements
                 ? "该期无记录"
                 : "加载中…"}
           </div>
         </div>
-      </section>
-
-      {/* 选中周期明细 */}
-      <section>
-        <div className="mb-2 flex items-center justify-between px-1">
-          <h3 className="flex items-center gap-2 text-sm font-semibold">
-            {selBucket.label}
-            {selBucket.isCurrent && (
-              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.65rem] font-medium text-amber-600 dark:text-amber-400">
-                进行中
-              </span>
-            )}
-          </h3>
-          {inRange.length > 0 && <span className="text-xs text-muted-foreground">{inRange.length} 次记录</span>}
-        </div>
-        {inRange.length > 0 ? (
-          <div className="space-y-2 ui-card p-3">
-            {[...inRange].reverse().map((m) => (
-              <div key={m.id} className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{formatChineseDate(new Date(m.measuredAt * 1000))}</span>
-                <span
-                  className={cn(
-                    "text-sm font-semibold tabular-nums",
-                    meta.accent === "pink"
-                      ? "text-pink-600 dark:text-pink-400"
-                      : "text-cyan-600 dark:text-cyan-400"
-                  )}
-                >
-                  {meta.format(m.valueGrams)}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-            {measurements ? "该期暂无记录" : "加载中…"}
-          </div>
-        )}
       </section>
 
       {/* 最新一次 + 快速录入 */}

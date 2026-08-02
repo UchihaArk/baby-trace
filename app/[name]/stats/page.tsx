@@ -186,20 +186,30 @@ export default function StatsPage() {
             ))}
           </div>
 
-          {/* 喂奶方式切换：仅喂奶指标下展示 */}
+          {/* 分割线：分隔主指标区与下方的视图切换/数据展示 */}
+          <div className="h-px bg-border" />
+
+          {/* 喂奶方式切换：仅喂奶指标下展示。用胶囊分段控件与上方主指标 Chip 区分层级。 */}
           {isFeedView && (
-            <div className="-mt-2 flex justify-center gap-2">
-              {FEEDING_METHOD_OPTIONS.map((f) => (
-                <Chip
-                  key={f.value}
-                  selected={feedMethod === f.value}
-                  onClick={() => setFeedMethodOverride(f.value)}
-                  selectedClass="border-transparent bg-rose-500 text-white"
-                  className="min-h-8 flex-none px-4 py-1 text-xs"
-                >
-                  {f.emoji} {f.label}
-                </Chip>
-              ))}
+            <div className="flex justify-center">
+              <div className="inline-flex rounded-full bg-muted/70 p-0.5">
+                {FEEDING_METHOD_OPTIONS.map((f) => (
+                  <button
+                    key={f.value}
+                    type="button"
+                    aria-pressed={feedMethod === f.value}
+                    onClick={() => setFeedMethodOverride(f.value)}
+                    className={cn(
+                      "rounded-full px-5 py-1.5 text-xs font-semibold transition duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
+                      feedMethod === f.value
+                        ? "bg-rose-500 text-white shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {f.emoji} {f.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

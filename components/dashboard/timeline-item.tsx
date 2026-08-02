@@ -21,7 +21,7 @@ import { formatClockTime, formatRelative } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { LogApi } from "@/lib/types";
 
-const EDITABLE = ["feed", "diaper", "pump", "bath", "haircut", "nail"] as const;
+const EDITABLE = ["feed", "diaper", "pump", "bath", "haircut", "nail", "sleep", "food"] as const;
 
 export function TimelineItem({
   log,
@@ -36,7 +36,7 @@ export function TimelineItem({
 }) {
   const meta = activityMeta[log.activityType];
   const desc = describeLog(log);
-  const { openFeed, openDiaper, openPump, openBath, openHaircut, openNail } = useLogEntry();
+  const { openFeed, openDiaper, openPump, openSleep, openFood, openBath, openHaircut, openNail } = useLogEntry();
   const [openDel, setOpenDel] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -56,6 +56,10 @@ export function TimelineItem({
         return openHaircut(log);
       case "nail":
         return openNail(log);
+      case "sleep":
+        return openSleep(log);
+      case "food":
+        return openFood(log);
     }
   }
 

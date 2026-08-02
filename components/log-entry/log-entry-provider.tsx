@@ -7,9 +7,11 @@ import { DiaperDrawer } from "./diaper-drawer";
 import { PumpDrawer } from "./pump-drawer";
 import { CareDrawer, type CareType } from "./care-drawer";
 import { MeasurementDrawer } from "./measurement-drawer";
+import { SleepDrawer } from "./sleep-drawer";
+import { FoodDrawer } from "./food-drawer";
 import type { BabyMeasurement, LogApi, MeasurementKind } from "@/lib/types";
 
-type DrawerKind = "feed" | "diaper" | "pump" | "care" | "weight" | "height" | null;
+type DrawerKind = "feed" | "diaper" | "pump" | "care" | "weight" | "height" | "sleep" | "food" | null;
 
 type LogEntryContextValue = {
   openFeed: (log?: LogApi) => void;
@@ -18,6 +20,8 @@ type LogEntryContextValue = {
   openBath: (log?: LogApi) => void;
   openHaircut: (log?: LogApi) => void;
   openNail: (log?: LogApi) => void;
+  openSleep: (log?: LogApi) => void;
+  openFood: (log?: LogApi) => void;
   openWeight: (m?: BabyMeasurement) => void;
   openHeight: (m?: BabyMeasurement) => void;
 };
@@ -66,6 +70,8 @@ const Drawers = memo(function Drawers({
         editing={editing}
         onOpenChange={handleChange}
       />
+      <SleepDrawer babyId={babyId} open={kind === "sleep"} editing={editing} onOpenChange={handleChange} />
+      <FoodDrawer babyId={babyId} open={kind === "food"} editing={editing} onOpenChange={handleChange} />
       <MeasurementDrawer
         babyId={babyId}
         open={kind === "weight" || kind === "height"}
@@ -108,6 +114,8 @@ export function LogEntryProvider({ children }: { children: React.ReactNode }) {
       openBath: (log) => open("care", log, "bath"),
       openHaircut: (log) => open("care", log, "haircut"),
       openNail: (log) => open("care", log, "nail"),
+      openSleep: (log) => open("sleep", log),
+      openFood: (log) => open("food", log),
       openWeight: (m) => openMeasurement("weight", m),
       openHeight: (m) => openMeasurement("height", m),
     }),

@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useLogEntry } from "@/components/log-entry/log-entry-provider";
-import { useElapsed, useTodayStats } from "@/lib/hooks";
-import { toggleSleep } from "@/lib/mutations";
-import { formatClock, formatRelative } from "@/lib/time";
+import { useTodayStats } from "@/lib/hooks";
+import { formatRelative } from "@/lib/time";
 import type { LogApi } from "@/lib/types";
 
 function BigButton({
@@ -88,37 +86,23 @@ function LastCareCard({
 }
 
 export function ActionDock({ babyId }: { babyId: number }) {
-  const { openFeed, openDiaper, openPump, openBath, openHaircut, openNail } = useLogEntry();
+  const { openFeed, openDiaper, openPump, openSleep, openFood, openBath, openHaircut, openNail } = useLogEntry();
   const { data } = useTodayStats(babyId);
-  const elapsed = useElapsed(data?.openSleep?.startTime ?? null);
-  const [toggling, setToggling] = useState(false);
-
-  const sleeping = !!data?.openSleep;
-
-  async function onSleep() {
-    setToggling(true);
-    await toggleSleep(babyId);
-    setToggling(false);
-  }
 
   return (
     <div className="space-y-6">
       {/* 喂养区 */}
       <section className="space-y-3">
         <h3 className="px-1 text-xs font-semibold text-muted-foreground">喂养</h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <BigButton onClick={() => openFeed()} emoji="🍼" label="喂奶" className="bg-gradient-to-b from-rose-500 to-rose-600 shadow-rose-500/25" />
           <BigButton onClick={() => openDiaper()} emoji="🧻" label="换尿布" className="bg-gradient-to-b from-amber-500 to-amber-600 shadow-amber-500/25" />
-          <BigButton onClick={() => openPump()} emoji="🥛" label="吸奶" className="bg-gradient-to-b from-teal-500 to-teal-600 shadow-teal-500/25" />
         </div>
-        <BigButton
-          onClick={onSleep}
-          disabled={toggling}
-          emoji="💤"
-          label={sleeping ? "停止睡眠" : "开始睡眠"}
-          sub={sleeping && elapsed != null ? `已睡 ${formatClock(elapsed)}` : "点击计时"}
-          className="bg-gradient-to-b from-indigo-500 to-indigo-600 shadow-indigo-500/25 w-full"
-        />
+        <div className="grid grid-cols-3 gap-3">
+          <BigButton onClick={() => openFood()} emoji="🥣" label="辅食" className="bg-gradient-to-b from-orange-500 to-orange-600 shadow-orange-500/25" />
+          <BigButton onClick={() => openPump()} emoji="🥛" label="吸奶" className="bg-gradient-to-b from-teal-500 to-teal-600 shadow-teal-500/25" />
+          <BigButton onClick={() => openSleep()} emoji="💤" label="睡眠" className="bg-gradient-to-b from-indigo-500 to-indigo-600 shadow-indigo-500/25" />
+        </div>
       </section>
 
       {/* 护理区 */}
