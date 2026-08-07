@@ -26,6 +26,7 @@ const COLOR_VAR: Record<Accent, { light: string; dark: string }> = {
   indigo: { light: "#6366f1", dark: "#818cf8" },
   pink: { light: "#ec4899", dark: "#f472b6" },
   cyan: { light: "#06b6d4", dark: "#22d3ee" },
+  violet: { light: "#8b5cf6", dark: "#a78bfa" },
 };
 
 function valueNumber(formatted: string): string {

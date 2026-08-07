@@ -4,8 +4,8 @@ export type Metric = "feed" | "pump" | "diaper" | "sleep";
 
 /** 喂奶方式：亲喂侧重次数/时长/侧别；瓶喂侧重奶量。与顶层 Metric 正交。 */
 export type FeedMethod = "breast" | "bottle";
-/** 指标/图表的主色调 key。体重用 pink、身高用 cyan，与活动色系错开。 */
-export type Accent = "rose" | "teal" | "amber" | "indigo" | "pink" | "cyan";
+/** 指标/图表的主色调 key。体重用 pink、身高用 cyan、头围用 violet，与活动色系错开。 */
+export type Accent = "rose" | "teal" | "amber" | "indigo" | "pink" | "cyan" | "violet";
 
 // ── 展示格式化（含单位，直接用于图表/明细） ──────────────────────────
 
@@ -137,6 +137,7 @@ export const ACCENT_BAR: Record<Accent, string> = {
   indigo: "bg-indigo-500 dark:bg-indigo-400",
   pink: "bg-pink-500 dark:bg-pink-400",
   cyan: "bg-cyan-500 dark:bg-cyan-400",
+  violet: "bg-violet-500 dark:bg-violet-400",
 };
 
 export const ACCENT_TEXT: Record<Accent, string> = {
@@ -146,6 +147,7 @@ export const ACCENT_TEXT: Record<Accent, string> = {
   indigo: "text-indigo-600 dark:text-indigo-400",
   pink: "text-pink-600 dark:text-pink-400",
   cyan: "text-cyan-600 dark:text-cyan-400",
+  violet: "text-violet-600 dark:text-violet-400",
 };
 
 export const ACCENT_SELECTED: Record<Accent, string> = {
@@ -155,6 +157,7 @@ export const ACCENT_SELECTED: Record<Accent, string> = {
   indigo: "border-transparent bg-indigo-500 text-white",
   pink: "border-transparent bg-pink-500 text-white",
   cyan: "border-transparent bg-cyan-500 text-white",
+  violet: "border-transparent bg-violet-500 text-white",
 };
 
 /** 折线图描边色（成长趋势用） */
@@ -165,6 +168,7 @@ export const ACCENT_LINE: Record<Accent, string> = {
   indigo: "stroke-indigo-500 dark:stroke-indigo-400",
   pink: "stroke-pink-500 dark:stroke-pink-400",
   cyan: "stroke-cyan-500 dark:stroke-cyan-400",
+  violet: "stroke-violet-500 dark:stroke-violet-400",
 };
 
 /** 折线图数据点填充色（选中态） */
@@ -175,4 +179,5 @@ export const ACCENT_DOT: Record<Accent, string> = {
   indigo: "fill-indigo-500 dark:fill-indigo-400",
   pink: "fill-pink-500 dark:fill-pink-400",
   cyan: "fill-cyan-500 dark:fill-cyan-400",
+  violet: "fill-violet-500 dark:fill-violet-400",
 };

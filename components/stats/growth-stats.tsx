@@ -5,7 +5,7 @@ import { Plus } from "lucide-react";
 import { Chip } from "@/components/log-entry/chip";
 import { useLogEntry } from "@/components/log-entry/log-entry-provider";
 import { GrowthChart, type GrowthPoint } from "@/components/stats/growth-chart";
-import { ACCENT_SELECTED, type Accent } from "@/components/stats/metrics";
+import { ACCENT_SELECTED, ACCENT_TEXT, type Accent } from "@/components/stats/metrics";
 import { useMeasurements } from "@/lib/hooks";
 import { formatHeight, formatWeight } from "@/lib/measure";
 import { PERIOD_OPTIONS, type Period } from "@/lib/periods";
@@ -19,11 +19,16 @@ type KindMeta = {
   emoji: string;
   accent: Accent;
   format: (v: number) => string;
+  /** 最新一笔卡片的背景 + 描边（Tailwind 字面量，accent 决定） */
+  cardBg: string;
+  /** 最新一笔试录按钮的背景 */
+  ctaBg: string;
 };
 
 const KINDS: KindMeta[] = [
-  { key: "weight", label: "体重", emoji: "⚖️", accent: "pink", format: formatWeight },
-  { key: "height", label: "身高", emoji: "📏", accent: "cyan", format: formatHeight },
+  { key: "weight", label: "体重", emoji: "⚖️", accent: "pink", format: formatWeight, cardBg: "bg-pink-500/5 ring-pink-500/20", ctaBg: "bg-pink-500" },
+  { key: "height", label: "身高", emoji: "📏", accent: "cyan", format: formatHeight, cardBg: "bg-cyan-500/5 ring-cyan-500/20", ctaBg: "bg-cyan-500" },
+  { key: "head", label: "头围", emoji: "🧢", accent: "violet", format: formatHeight, cardBg: "bg-violet-500/5 ring-violet-500/20", ctaBg: "bg-violet-500" },
 ];
 
 /** 成长 Tab 可用粒度：去掉日/周（测量值稀疏，日/周无意义） */
@@ -95,8 +100,8 @@ export function GrowthStats({ babyId }: { babyId: number }) {
 
   const meta = KINDS.find((k) => k.key === kind)!;
   const { data: measurements } = useMeasurements(babyId, kind);
-  const { openWeight, openHeight } = useLogEntry();
-  const openMeasure = kind === "weight" ? openWeight : openHeight;
+  const { openWeight, openHeight, openHead } = useLogEntry();
+  const openMeasure = kind === "weight" ? openWeight : kind === "height" ? openHeight : openHead;
 
   const { caption, buckets } = useMemo(() => growthRange(period), [period]);
   const n = buckets.length;
@@ -227,14 +232,12 @@ export function GrowthStats({ babyId }: { babyId: number }) {
           onClick={() => openMeasure()}
           className={cn(
             "flex w-full items-center justify-between rounded-2xl p-4 ring-1 transition active:scale-[.99]",
-            meta.accent === "pink"
-              ? "bg-pink-500/5 ring-pink-500/20"
-              : "bg-cyan-500/5 ring-cyan-500/20"
+            meta.cardBg
           )}
         >
           <div className="text-left">
             <div className="text-xs text-muted-foreground">最新{meta.label}</div>
-            <div className={cn("mt-0.5 text-lg font-bold tabular-nums", meta.accent === "pink" ? "text-pink-600 dark:text-pink-400" : "text-cyan-600 dark:text-cyan-400")}>
+            <div className={cn("mt-0.5 text-lg font-bold tabular-nums", ACCENT_TEXT[meta.accent])}>
               {meta.format(latestAll.valueGrams)}
             </div>
             <div className="text-xs text-muted-foreground">{formatChineseDate(new Date(latestAll.measuredAt * 1000))}</div>
@@ -242,7 +245,7 @@ export function GrowthStats({ babyId }: { babyId: number }) {
           <span
             className={cn(
               "flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold text-white",
-              meta.accent === "pink" ? "bg-pink-500" : "bg-cyan-500"
+              meta.ctaBg
             )}
           >
             <Plus className="size-3.5" /> 记一笔

@@ -9,7 +9,7 @@ import { nowSec } from "../lib";
 
 const listQuerySchema = z.object({
   babyId: z.string(),
-  kind: z.enum(["weight", "height"]),
+  kind: z.enum(["weight", "height", "head"]),
 });
 
 export const measurementsRoutes = new Hono<AppEnv>()

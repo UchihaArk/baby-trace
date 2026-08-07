@@ -23,7 +23,7 @@ type Milk = "breastmilk" | "formula";
 type Side = "left" | "right" | "both";
 
 const BOTTLE_PRESETS = [60, 90, 120, 150, 180];
-const BREAST_PRESETS = [5, 10, 15, 20, 30];
+const BREAST_PRESETS = [10, 20, 30, 40];
 
 function initMethod(editing: LogApi | null): Method {
   const d = editing?.details;
@@ -37,7 +37,7 @@ function initMilk(editing: LogApi | null): Milk {
 }
 function initAmount(editing: LogApi | null, method: Method): number {
   if (editing?.amount != null) return editing.amount;
-  return method === "bottle" ? 120 : 20;
+  return method === "bottle" ? 120 : 30;
 }
 function initSide(editing: LogApi | null): Side {
   const d = editing?.details;
@@ -85,7 +85,7 @@ function FeedForm({
   const [saving, setSaving] = useState(false);
 
   const unit = method === "bottle" ? "ml" : "分钟";
-  const step = method === "bottle" ? 10 : 1;
+  const step = method === "bottle" ? 10 : 5;
   const minVal = method === "bottle" ? 5 : 1;
   const presets = method === "bottle" ? BOTTLE_PRESETS : BREAST_PRESETS;
 

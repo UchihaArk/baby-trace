@@ -30,6 +30,7 @@ type KindConfig = {
   unit: string; // kg / cm
   step: number; // ±按钮步进（以存储单位计：克 / 毫米）
   presets: number[]; // 预设快捷值（存储单位）
+  defaultValue: string; // 新建时输入框初值
   /** 存储单位 → 输入框展示字符串（小数） */
   toInput: (v: number) => string;
   /** 输入框字符串 → 存储单位（非法返回 null） */
@@ -47,6 +48,7 @@ const KIND_CONFIG: Record<MeasurementKind, KindConfig> = {
     // 否则 50g 步进会被四舍五入吞掉，表现为加减按钮失灵。
     step: 100,
     presets: [3000, 5000, 7000, 9000], // 3.0 / 5.0 / 7.0 / 9.0 kg
+    defaultValue: "3.5",
     toInput: formatKg,
     fromInput: kgToGrams,
     accent: "pink",
@@ -57,19 +59,33 @@ const KIND_CONFIG: Record<MeasurementKind, KindConfig> = {
     unit: "cm",
     step: 5, // 5mm = 0.5cm
     presets: [500, 550, 600, 700], // 50.0 / 55.0 / 60.0 / 70.0 cm
+    defaultValue: "50.0",
     toInput: formatCm,
     fromInput: cmToMm,
     accent: "cyan",
+  },
+  head: {
+    label: "头围",
+    emoji: "🧢",
+    unit: "cm",
+    step: 2, // 2mm = 0.2cm
+    presets: [340, 360, 380, 400], // 34.0 / 36.0 / 38.0 / 40.0 cm
+    defaultValue: "35.0",
+    toInput: formatCm,
+    fromInput: cmToMm,
+    accent: "violet",
   },
 };
 
 const ACCENT_SOLID: Record<string, string> = {
   pink: "bg-pink-500 hover:bg-pink-500/90",
   cyan: "bg-cyan-500 hover:bg-cyan-500/90",
+  violet: "bg-violet-500 hover:bg-violet-500/90",
 };
 const ACCENT_CHIP: Record<string, string> = {
   pink: "border-transparent bg-pink-500 text-white",
   cyan: "border-transparent bg-cyan-500 text-white",
+  violet: "border-transparent bg-violet-500 text-white",
 };
 
 export function MeasurementDrawer({
@@ -113,7 +129,7 @@ function MeasurementForm({
 }) {
   const cfg = KIND_CONFIG[kind];
   const [inputValue, setInputValue] = useState<string>(() =>
-    editing ? cfg.toInput(editing.valueGrams) : kind === "weight" ? "3.5" : "50.0"
+    editing ? cfg.toInput(editing.valueGrams) : cfg.defaultValue
   );
   const [at, setAt] = useState<string>(() => secToLocalInput(editing?.measuredAt ?? nowSec()));
   const [notes, setNotes] = useState<string>(() => editing?.notes ?? "");
@@ -218,7 +234,7 @@ function MeasurementForm({
             id={`measure-notes-${kind}`}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder={`例如：${kind === "weight" ? "体检称重" : "体检量身高"}`}
+            placeholder={`例如：${kind === "weight" ? "体检称重" : kind === "height" ? "体检量身高" : "体检量头围"}`}
             className="text-base"
           />
         </div>

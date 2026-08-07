@@ -4,8 +4,8 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 export const activityTypes = ["feed", "diaper", "sleep", "pump", "bath", "haircut", "nail", "food"] as const;
 export type ActivityType = (typeof activityTypes)[number];
 
-/** 测量种类：weight 体重 / height 身高。独立于活动日志，为后续头围等扩展预留。 */
-export const measurementKinds = ["weight", "height"] as const;
+/** 测量种类：weight 体重 / height 身高 / head 头围。独立于活动日志。 */
+export const measurementKinds = ["weight", "height", "head"] as const;
 export type MeasurementKind = (typeof measurementKinds)[number];
 
 /** 性别 */
@@ -60,10 +60,10 @@ export const babyLogs = sqliteTable("baby_logs", {
 });
 
 /**
- * baby_measurements —— 身体测量记录（体重 / 身高，独立于活动日志）
+ * baby_measurements —— 身体测量记录（体重 / 身高 / 头围，独立于活动日志）
  * - kind：测量种类。
  * - measured_at：Unix 秒（测量时刻）。
- * - value_grams：统一整数存储。体重存克（8200 = 8.2kg），身高存毫米（680 = 68.0cm）。
+ * - value_grams：统一整数存储。体重存克（8200 = 8.2kg），身高/头围存毫米（680 = 68.0cm）。
  *   复用同一列避免拆表；kind 决定单位语义。
  */
 export const babyMeasurements = sqliteTable("baby_measurements", {

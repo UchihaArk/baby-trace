@@ -11,7 +11,7 @@ import { SleepDrawer } from "./sleep-drawer";
 import { FoodDrawer } from "./food-drawer";
 import type { BabyMeasurement, LogApi, MeasurementKind } from "@/lib/types";
 
-type DrawerKind = "feed" | "diaper" | "pump" | "care" | "weight" | "height" | "sleep" | "food" | null;
+type DrawerKind = "feed" | "diaper" | "pump" | "care" | "weight" | "height" | "head" | "sleep" | "food" | null;
 
 type LogEntryContextValue = {
   openFeed: (log?: LogApi) => void;
@@ -24,6 +24,7 @@ type LogEntryContextValue = {
   openFood: (log?: LogApi) => void;
   openWeight: (m?: BabyMeasurement) => void;
   openHeight: (m?: BabyMeasurement) => void;
+  openHead: (m?: BabyMeasurement) => void;
 };
 
 const LogEntryContext = createContext<LogEntryContextValue | null>(null);
@@ -74,7 +75,7 @@ const Drawers = memo(function Drawers({
       <FoodDrawer babyId={babyId} open={kind === "food"} editing={editing} onOpenChange={handleChange} />
       <MeasurementDrawer
         babyId={babyId}
-        open={kind === "weight" || kind === "height"}
+        open={kind === "weight" || kind === "height" || kind === "head"}
         kind={measureKind}
         editing={measureEditing}
         onOpenChange={handleChange}
@@ -118,6 +119,7 @@ export function LogEntryProvider({ children }: { children: React.ReactNode }) {
       openFood: (log) => open("food", log),
       openWeight: (m) => openMeasurement("weight", m),
       openHeight: (m) => openMeasurement("height", m),
+      openHead: (m) => openMeasurement("head", m),
     }),
     []
   );

@@ -63,12 +63,12 @@ export const toggleSleepSchema = z.object({
   babyId: z.number().int().positive(),
 });
 
-// ── 身体测量（体重 / 身高） ────────────────────────────────────────────
+// ── 身体测量（体重 / 身高 / 头围） ──────────────────────────────────────
 
-export const measurementKindSchema = z.enum(["weight", "height"]);
+export const measurementKindSchema = z.enum(["weight", "height", "head"]);
 
 /** 创建一条测量记录的入参。
- *  valueGrams：体重存克（8200=8.2kg），身高存毫米（680=68.0cm），统一整数。 */
+ *  valueGrams：体重存克（8200=8.2kg），身高/头围存毫米（680=68.0cm），统一整数。 */
 export const createMeasurementSchema = z.object({
   babyId: z.number().int().positive(),
   kind: measurementKindSchema,

@@ -34,6 +34,14 @@ const KIND_CONFIG: Record<MeasurementKind, KindConfig> = {
     accentBg: "bg-cyan-500/10",
     accentRing: "ring-cyan-500/20",
   },
+  head: {
+    emoji: "🧢",
+    label: "头围",
+    format: formatHeight, // 头围与身高同为毫米存储、cm 展示
+    accentText: "text-violet-600 dark:text-violet-400",
+    accentBg: "bg-violet-500/10",
+    accentRing: "ring-violet-500/20",
+  },
 };
 
 function MeasureCard({
@@ -45,8 +53,9 @@ function MeasureCard({
 }) {
   const cfg = KIND_CONFIG[kind];
   const { data } = useMeasurements(babyId, kind);
-  const { openWeight, openHeight } = useLogEntry();
-  const open = kind === "weight" ? openWeight : openHeight;
+  const { openWeight, openHeight, openHead } = useLogEntry();
+  const open =
+    kind === "weight" ? openWeight : kind === "height" ? openHeight : openHead;
 
   const latest = data && data.length > 0 ? data[data.length - 1] : null;
   const prev = data && data.length >= 2 ? data[data.length - 2] : null;
@@ -99,13 +108,13 @@ function MeasureCard({
 }
 
 export function BodySummary({ babyId }: { babyId: number }) {
-  const { openWeight, openHeight } = useLogEntry();
+  const { openWeight, openHeight, openHead } = useLogEntry();
 
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between px-1">
         <h3 className="text-xs font-semibold text-muted-foreground">身体</h3>
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap justify-end gap-1.5">
           <button
             type="button"
             onClick={() => openWeight()}
@@ -120,11 +129,19 @@ export function BodySummary({ babyId }: { babyId: number }) {
           >
             <Plus className="size-3.5" /> 身高
           </button>
+          <button
+            type="button"
+            onClick={() => openHead()}
+            className="flex items-center gap-1 rounded-full bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-600 transition active:scale-95 dark:text-violet-400"
+          >
+            <Plus className="size-3.5" /> 头围
+          </button>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <MeasureCard kind="weight" babyId={babyId} />
         <MeasureCard kind="height" babyId={babyId} />
+        <MeasureCard kind="head" babyId={babyId} />
       </div>
     </section>
   );
